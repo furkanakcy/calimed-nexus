@@ -750,13 +750,12 @@ app.get('/api/health', (req, res) => {
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('public'));
+  // Serve static files
+  app.use(express.static(path.join(__dirname, 'public')));
   
-  // Serve React app for all non-API routes (this should be the last route)
+  // Handle React routing, return all requests to React app
   app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api') && req.path !== '/health') {
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    }
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
 }
 

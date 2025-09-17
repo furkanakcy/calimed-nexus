@@ -1,21 +1,29 @@
 services:
   - type: web
-    name: calimed-nexus-backend
+    name: calimed-nexus
     env: node
     region: frankfurt
     plan: starter
-    buildCommand: ./build-for-render.sh
+    buildCommand: |
+      echo "Building frontend..."
+      npm install
+      npm run build
+      echo "Setting up backend..."
+      cd server
+      npm install
+      npx prisma generate
+      echo "Copying frontend to server..."
+      mkdir -p public
+      cp -r ../dist/* ./public/
+      echo "Build complete!"
     startCommand: cd server && npm start
-    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: calimed-db
-          property: connectionString
+        value: postgresql://calimed_db_7p88_user:G1JXY1NXPu32T0tkGiEQJYNgq2nlQAdH@dpg-d35j0mvfte5s73fg03ng-a.frankfurt-postgres.render.com/calimed_db_7p88
       - key: JWT_SECRET
-        generateValue: true
+        value: super_secret_key_change_in_production_render_2024
 
 databases:
   - name: calimed-db
