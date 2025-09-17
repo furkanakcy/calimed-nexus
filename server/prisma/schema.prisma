@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  email        String        @unique
+  password     String
+  logo         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  users        User[]
+  hospitals    Hospital[]
+  devices      Device[]
+  calibrations Calibration[]
+  serviceOrders ServiceOrder[]
+  validations   Validation[]
+  plannings     Planning[]
+  hvacReports   HVACReport[]
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String
+  role         String        // 'admin', 'technician', 'hospital'
+  companyId    Int
+  company      Company       @relation(fields: [companyId], references: [id])
+  calibrations Calibration[]
+  serviceOrders ServiceOrder[]
+  validations   Validation[]
+  plannings     Planning[]
+  hvacReports   HVACReport[]
+  createdAt    DateTime      @default(now())
+}
+
+model Hospital {
+  id           Int           @id @default(autoincrement())
+  name         String
+  address      String?
+  phone        String?
+  email        String?
+  companyId    Int
+  company      Company       @relation(fields: [companyId], references: [id])
+  devices      Device[]
+  calibrations Calibration[]
+  serviceOrders ServiceOrder[]
+  validations   Validation[]
+  plannings     Planning[]
+  hvacReports   HVACReport[]
+  createdAt    DateTime      @default(now())
+}
+
+model Device {
+  id           Int           @id @default(autoincrement())
+  serialNo     String        @unique
+  type         String        // 'ekg', 'ventilator'
+  model        String
+  brand        String
+  hospitalId   Int
+  hospital     Hospital      @relation(fields: [hospitalId], references: [id])
+  companyId    Int
+  company      Company       @relation(fields: [companyId], references: [id])
+  calibrations Calibration[]
+  serviceOrders ServiceOrder[]
+  validations   Validation[]
+  plannings     Planning[]
+  createdAt    DateTime      @default(now())
+}
+
+model Calibration {
+  id                Int           @id @default(autoincrement())
+  deviceId          Int
+  device            Device        @relation(fields: [deviceId], references: [id])
+  technicianId      Int
+  technician        User          @relation(fields: [technicianId], references: [id])
+  hospitalId        Int
+  hospital          Hospital      @relation(fields: [hospitalId], references: [id])
+  companyId         Int
+  company           Company       @relation(fields: [companyId], references: [id])
+  date              DateTime      @default(now())
+  environmentTemp   Float?
+  environmentHumidity Float?
+  status            String        // 'geçti', 'geçmedi'
+  results           TestResult[]
+  report            Report?
+  createdAt         DateTime      @default(now())
+}
+
+model ServiceOrder {
+  id            Int           @id @default(autoincrement())
+  description   String
+  status        String        // 'pending', 'in_progress', 'completed', 'cancelled'
+  priority      String?       // 'low', 'medium', 'high'
+  scheduledDate DateTime?
+  completedDate DateTime?
+  companyId     Int
+  company       Company       @relation(fields: [companyId], references: [id])
+  hospitalId    Int
+  hospital      Hospital      @relation(fields: [hospitalId], references: [id])
+  deviceId      Int?
+  device        Device?       @relation(fields: [deviceId], references: [id])
+  technicianId  Int?
+  technician    User?         @relation(fields: [technicianId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Validation {
+  id            Int           @id @default(autoincrement())
+  validationType String
+  date          DateTime      @default(now())
+  status        String        // 'passed', 'failed', 'pending'
+  results       String?       // JSON string or text field for results summary
+  companyId     Int
+  company       Company       @relation(fields: [companyId], references: [id])
+  hospitalId    Int
+  hospital      Hospital      @relation(fields: [hospitalId], references: [id])
+  deviceId      Int?
+  device        Device?       @relation(fields: [deviceId], references: [id])
+  technicianId  Int?
+  technician    User?         @relation(fields: [technicianId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Planning {
+  id            Int           @id @default(autoincrement())
+  planType      String        // 'calibration', 'maintenance', 'service'
+  description   String
+  startDate     DateTime
+  endDate       DateTime
+  status        String        // 'scheduled', 'in_progress', 'completed', 'cancelled'
+  companyId     Int
+  company       Company       @relation(fields: [companyId], references: [id])
+  hospitalId    Int
+  hospital      Hospital      @relation(fields: [hospitalId], references: [id])
+  deviceId      Int?
+  device        Device?       @relation(fields: [deviceId], references: [id])
+  assignedToId  Int?
+  assignedTo    User?         @relation(fields: [assignedToId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model TestResult {
+  id              Int           @id @default(autoincrement())
+  calibrationId   Int
+  calibration     Calibration   @relation(fields: [calibrationId], references: [id])
+  testName        String
+  measuredValue   Float
+  expectedValue   Float
+  tolerance       Float
+  passed          Boolean
+}
+
+model Report {
+  id              Int           @id @default(autoincrement())
+  calibrationId   Int           @unique
+  calibration     Calibration   @relation(fields: [calibrationId], references: [id])
+  pdfUrl          String
+  digitalSignature String?      // base64
+  timestamp       DateTime      @default(now())
+}
+
+model HVACReport {
+  id               Int           @id @default(autoincrement())
+  hospitalName     String
+  hospitalId       Int?
+  hospital         Hospital?     @relation(fields: [hospitalId], references: [id])
+  reportNo         String        @unique
+  measurementDate  DateTime
+  testerName       String
+  preparedBy       String
+  approvedBy       String
+  organizationName String
+  logo             String?       // base64 encoded image
+  stamp            String?       // base64 encoded image
+  companyId        Int
+  company          Company       @relation(fields: [companyId], references: [id])
+  createdById      Int
+  createdBy        User          @relation(fields: [createdById], references: [id])
+  rooms            HVACRoom[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model HVACRoom {
+  id           Int           @id @default(autoincrement())
+  reportId     Int
+  report       HVACReport    @relation(fields: [reportId], references: [id])
+  roomNo       String
+  roomName     String
+  surfaceArea  Float
+  height       Float
+  volume       Float
+  testMode     String        // 'At Rest' | 'In Operation'
+  flowType     String        // 'Turbulence' | 'Laminar' | 'Unidirectional'
+  roomClass    String
+  testData     String?       // JSON string containing all test results
+  createdAt    DateTime      @default(now())
+}

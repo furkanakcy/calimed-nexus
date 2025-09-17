@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@babel/template": "^7.27.2"
+  }
+}

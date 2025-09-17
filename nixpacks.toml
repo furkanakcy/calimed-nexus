@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ['nodejs_20', 'openssl', 'postgresql']
+
+[phases.install]
+cmds = ['cd server && npm install', 'cd server && npx prisma generate']
+
+[phases.build]
+cmds = ['echo "Build completed"']
+
+[start]
+cmd = 'cd server && npm start'
