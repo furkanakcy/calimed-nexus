@@ -728,23 +728,22 @@ app.delete('/api/hvac-reports/:id', authenticateToken(['admin', 'technician']), 
   }
 });
 
-
-// Health check endpoints
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    message: 'CaliMed Nexus API', 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
-});
-
+// Health check endpoints (must be before static file serving)
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     database: prisma ? 'connected' : 'disconnected',
-    port: PORT
+    port: process.env.PORT || 5000
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    database: prisma ? 'connected' : 'disconnected',
+    api: 'CaliMed Nexus API v1.0.0'
   });
 });
 
@@ -752,9 +751,9 @@ app.get('/health', (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('public'));
   
-  // Serve React app for all non-API routes
+  // Serve React app for all non-API routes (this should be the last route)
   app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
+    if (!req.path.startsWith('/api') && req.path !== '/health') {
       res.sendFile(path.join(__dirname, 'public', 'index.html'));
     }
   });
