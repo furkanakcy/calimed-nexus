@@ -734,7 +734,8 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     database: prisma ? 'connected' : 'disconnected',
-    port: process.env.PORT || 5000
+    port: process.env.PORT || 5000,
+    version: '1.0.1'
   });
 });
 
