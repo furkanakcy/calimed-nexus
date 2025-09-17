@@ -750,12 +750,37 @@ app.get('/api/health', (req, res) => {
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
+  const publicPath = path.join(__dirname, 'public');
+  console.log(`Serving static files from: ${publicPath}`);
+  
+  // Check if public directory exists
+  const fs = require('fs');
+  if (fs.existsSync(publicPath)) {
+    console.log('Public directory exists');
+    const indexPath = path.join(publicPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      console.log('index.html found');
+    } else {
+      console.log('WARNING: index.html not found!');
+    }
+  } else {
+    console.log('WARNING: Public directory does not exist!');
+  }
+  
   // Serve static files
-  app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.static(publicPath, {
+    maxAge: '1d',
+    etag: false
+  }));
   
   // Handle React routing, return all requests to React app
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const indexPath = path.join(publicPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send('Application not found. Build may have failed.');
+    }
   });
 }
 
