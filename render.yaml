@@ -12,9 +12,7 @@ services:
       - key: JWT_SECRET
         value: super_secret_key_change_in_production_render_2024
       - key: DATABASE_URL
-        fromDatabase:
-          name: calimed-db
-          property: connectionString
+        value: postgresql://calimed_db_7p88_user:G1JXY1NXPu32T0tkGiEQJYNgq2nlQAdH@dpg-d35j0mvfte5s73fg03ng-a/calimed_db_7p88
 
 databases:
   - name: calimed-db

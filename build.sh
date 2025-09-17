@@ -35,6 +35,14 @@ npm ci --omit=dev
 echo "Generating Prisma client..."
 npx prisma generate
 
+echo "Testing database connection..."
+if npx prisma db execute --stdin <<< "SELECT 1;" > /dev/null 2>&1; then
+    echo "✅ Database connection successful"
+else
+    echo "❌ Database connection failed"
+    echo "DATABASE_URL: ${DATABASE_URL}"
+fi
+
 echo "Running database migrations..."
 if npx prisma migrate deploy; then
     echo "Migrations completed successfully"
