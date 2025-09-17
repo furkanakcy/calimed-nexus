@@ -219,12 +219,24 @@ export default function LoginPage() {
 
           <div className="mt-8 text-center">
             <div className="bg-white/5 rounded-xl p-4 mb-4">
-              <p className="text-sm text-white/70 mb-2">
-                Demo hesap bilgileri için destek ekibimizle iletişime geçin
+              <p className="text-sm text-white/70 mb-3">
+                Demo Hesap Bilgileri
               </p>
-              <div className="flex justify-center space-x-4 text-xs text-white/50">
-                <span>📧 demo@calimed.com</span>
-                <span>📞 +90 212 555 0123</span>
+              <div className="space-y-2 text-xs">
+                <div className="bg-white/10 rounded-lg p-3">
+                  <p className="text-white/90 font-medium">E-posta: {config.demo.email}</p>
+                  <p className="text-white/90 font-medium">Şifre: {config.demo.password}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(config.demo.email);
+                    setPassword(config.demo.password);
+                  }}
+                  className="text-blue-300 hover:text-blue-200 text-xs underline transition-colors"
+                >
+                  Demo bilgilerini otomatik doldur
+                </button>
               </div>
             </div>
             <p className="text-sm text-white/70">

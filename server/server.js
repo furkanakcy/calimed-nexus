@@ -784,26 +784,55 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Test database connection
+async function testDatabaseConnection() {
+  try {
+    await prisma.$connect();
+    console.log('✅ Database connected successfully');
+    
+    // Test a simple query
+    const companyCount = await prisma.company.count();
+    console.log(`📊 Database has ${companyCount} companies`);
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    return false;
+  }
+}
+
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
-  console.log(`Database URL configured: ${process.env.DATABASE_URL ? 'Yes' : 'No'}`);
-});
+
+// Start server with database check
+async function startServer() {
+  console.log(`🚀 Starting CaliMed Nexus Server...`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔗 Database URL configured: ${process.env.DATABASE_URL ? 'Yes' : 'No'}`);
+  
+  const dbConnected = await testDatabaseConnection();
+  
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`🌐 Health check: http://localhost:${PORT}/health`);
+    if (!dbConnected) {
+      console.log('⚠️  Server started but database connection failed');
+    }
+  });
+
+  return server;
+}
+
+startServer().catch(console.error);
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-    prisma.$disconnect();
-  });
+  await prisma.$disconnect();
+  process.exit(0);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-    prisma.$disconnect();
-  });
+  await prisma.$disconnect();
+  process.exit(0);
 });

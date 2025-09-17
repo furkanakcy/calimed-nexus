@@ -35,6 +35,21 @@ npm ci --omit=dev
 echo "Generating Prisma client..."
 npx prisma generate
 
+echo "Running database migrations..."
+if npx prisma migrate deploy; then
+    echo "Migrations completed successfully"
+else
+    echo "Migration failed, trying to push schema..."
+    npx prisma db push --force-reset || echo "Schema push failed, continuing..."
+fi
+
+echo "Seeding database with demo data..."
+if node seed.js; then
+    echo "Database seeded successfully"
+else
+    echo "Seeding failed, but continuing with build..."
+fi
+
 echo "=== Preparing static files ==="
 rm -rf public
 mkdir -p public

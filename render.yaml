@@ -9,10 +9,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
-        value: postgresql://calimed_db_7p88_user:G1JXY1NXPu32T0tkGiEQJYNgq2nlQAdH@dpg-d35j0mvfte5s73fg03ng-a.frankfurt-postgres.render.com/calimed_db_7p88
       - key: JWT_SECRET
         value: super_secret_key_change_in_production_render_2024
+      - key: DATABASE_URL
+        fromDatabase:
+          name: calimed-db
+          property: connectionString
 
 databases:
   - name: calimed-db

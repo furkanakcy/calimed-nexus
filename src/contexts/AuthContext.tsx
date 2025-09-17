@@ -61,25 +61,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string, isDemo: boolean, role?: UserRole): Promise<boolean> => {
+  const login = async (email: string, password: string, isDemo: boolean = false, role?: UserRole): Promise<boolean> => {
     setIsLoading(true);
 
-    if (isDemo && role) {
-      // Simulate demo login
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const demoUser = DEMO_USERS[role];
-      if (email === demoUser.email && password === 'demo123') { // Assuming demo password is 'demo123'
+    // Check if this is a demo account (auto-detect)
+    const isDemoAccount = Object.values(DEMO_USERS).some(user => user.email === email);
+    
+    if (isDemoAccount && password === 'demo123') {
+      // Find the demo user by email
+      const demoUser = Object.values(DEMO_USERS).find(user => user.email === email);
+      if (demoUser) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
         setUser(demoUser);
         localStorage.setItem('calimed-user', JSON.stringify(demoUser));
         setIsLoading(false);
         return true;
       }
-      setIsLoading(false);
-      return false;
     }
 
+    // If not demo or demo failed, try regular login
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      // Use production API URL for deployed version
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5000' 
+        : window.location.origin;
+        
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
