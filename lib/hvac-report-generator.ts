@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs'
-import { HvacReportData, RoomTestData } from './hvac-types'
+import { HvacReportData, Room } from './hvac-types'
 
 // Create reports directory if it doesn't exist
 const ensureReportsDirectory = () => {
@@ -8,6 +8,11 @@ const ensureReportsDirectory = () => {
 }
 
 export async function generateHvacReportExcel(reportData: HvacReportData) {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    throw new Error('Excel generation is only available in browser environment')
+  }
+  
   const workbook = new ExcelJS.Workbook()
   
   // Set workbook properties
@@ -51,14 +56,18 @@ export async function generateHvacReportExcel(reportData: HvacReportData) {
   const fileName = `HVAC_Raporu_${reportData.reportInfo.reportNumber}_${new Date().toISOString().split('T')[0]}.xlsx`
   
   // Save to reports directory (simulated with localStorage for now)
-  const reportFiles = JSON.parse(localStorage.getItem('hvac-report-files') || '{}')
-  reportFiles[reportData.id] = reportFiles[reportData.id] || {}
-  reportFiles[reportData.id].excel = {
-    fileName,
-    createdAt: new Date().toISOString(),
-    size: buffer.byteLength
+  try {
+    const reportFiles = JSON.parse(localStorage.getItem('hvac-report-files') || '{}')
+    reportFiles[reportData.id] = reportFiles[reportData.id] || {}
+    reportFiles[reportData.id].excel = {
+      fileName,
+      createdAt: new Date().toISOString(),
+      size: buffer.byteLength
+    }
+    localStorage.setItem('hvac-report-files', JSON.stringify(reportFiles))
+  } catch (error) {
+    console.warn('Could not save file info to localStorage:', error)
   }
-  localStorage.setItem('hvac-report-files', JSON.stringify(reportFiles))
   
   // Download the file
   const blob = new Blob([buffer], { 
@@ -77,7 +86,7 @@ export async function generateHvacReportExcel(reportData: HvacReportData) {
   return fileName
 }
 
-function addProfessionalHeader(worksheet: ExcelJS.Worksheet, room: RoomTestData, reportData: HvacReportData, pageNumber: number) {
+function addProfessionalHeader(worksheet: ExcelJS.Worksheet, room: Room, reportData: HvacReportData, pageNumber: number) {
   // Company header
   worksheet.mergeCells('A1:F1')
   const companyCell = worksheet.getCell('A1')
@@ -112,9 +121,9 @@ function addProfessionalHeader(worksheet: ExcelJS.Worksheet, room: RoomTestData,
   roomInfoCell.alignment = { horizontal: 'center', vertical: 'middle' }
   
   // Room details in a structured table
-  const detailsRow1 = worksheet.addRow(['Mahal No:', room.basicInfo.roomNumber, 'Akış Biçimi:', room.basicInfo.flowType, 'Yüzey Alanı:', `${room.basicInfo.surfaceArea} m²`])
-  const detailsRow2 = worksheet.addRow(['Mahal Adı:', room.basicInfo.roomName, 'Test Modu:', room.basicInfo.testMode, 'Yükseklik:', `${room.basicInfo.height} m`])
-  const detailsRow3 = worksheet.addRow(['Mahal Sınıfı:', room.basicInfo.roomClass, 'Hacim:', `${room.basicInfo.volume} m³`, 'Sayfa:', `${pageNumber}/${reportData.rooms.length}`])
+  const detailsRow1 = worksheet.addRow(['Mahal No:', room.roomNo, 'Akış Biçimi:', room.flowType, 'Yüzey Alanı:', `${room.surfaceArea} m²`])
+  const detailsRow2 = worksheet.addRow(['Mahal Adı:', room.roomName, 'Test Modu:', room.testMode, 'Yükseklik:', `${room.height} m`])
+  const detailsRow3 = worksheet.addRow(['Mahal Sınıfı:', room.roomClass, 'Hacim:', `${room.volume} m³`, 'Sayfa:', `${pageNumber}/${reportData.rooms.length}`])
   
   // Style the details rows
   [detailsRow1, detailsRow2, detailsRow3].forEach(row => {
@@ -137,7 +146,7 @@ function addProfessionalHeader(worksheet: ExcelJS.Worksheet, room: RoomTestData,
   worksheet.addRow([])
 }
 
-function addEnhancedTestResultsTable(worksheet: ExcelJS.Worksheet, room: RoomTestData) {
+function addEnhancedTestResultsTable(worksheet: ExcelJS.Worksheet, room: Room) {
   // Test results header
   const testHeaderRow = worksheet.addRow(['TEST SONUÇLARI', '', '', '', '', ''])
   worksheet.mergeCells(`A${testHeaderRow.number}:F${testHeaderRow.number}`)
@@ -163,52 +172,60 @@ function addEnhancedTestResultsTable(worksheet: ExcelJS.Worksheet, room: RoomTes
   // Test data with enhanced styling
   const tests = [
     {
-      no: '3',
+      no: '1',
+      name: 'Hava Debisi',
+      criteria: room.tests.airflowData.criteria,
+      measurement: `${room.tests.airflowData.flowRate} m³/h`,
+      result: room.tests.airflowData.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+      status: room.tests.airflowData.meetsCriteria
+    },
+    {
+      no: '2',
       name: 'Basınç Farkı',
-      criteria: '≥ 6 Pa',
-      measurement: `${room.pressureDifference.pressure} Pa`,
-      result: room.pressureDifference.result,
-      status: room.pressureDifference.meetsMinPressure
+      criteria: room.tests.pressureDifference.criteria,
+      measurement: `${room.tests.pressureDifference.pressure} Pa`,
+      result: room.tests.pressureDifference.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+      status: room.tests.pressureDifference.meetsCriteria
+    },
+    {
+      no: '3',
+      name: 'Hava Akış Yönü',
+      criteria: 'Temiz → Kirli',
+      measurement: room.tests.airFlowDirection.observation || 'Gözlem',
+      result: room.tests.airFlowDirection.result,
+      status: room.tests.airFlowDirection.result === 'UYGUNDUR'
     },
     {
       no: '4',
-      name: 'Hava Akış Yönü',
-      criteria: 'Temiz → Kirli',
-      measurement: 'Gözlem',
-      result: room.airFlowDirection.result,
-      status: room.airFlowDirection.result === 'Uygundur'
+      name: 'HEPA Sızdırmazlık',
+      criteria: room.tests.hepaLeakage.criteria,
+      measurement: `${room.tests.hepaLeakage.actualLeakage}%`,
+      result: room.tests.hepaLeakage.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+      status: room.tests.hepaLeakage.meetsCriteria
     },
     {
       no: '5',
-      name: 'HEPA Sızdırmazlık',
-      criteria: '≤ %0.01',
-      measurement: `%${room.hepaLeakage.maxLeakage}`,
-      result: room.hepaLeakage.result,
-      status: room.hepaLeakage.meetsMaxLeakage
+      name: 'Partikül Sayısı (0.5 µm)',
+      criteria: `ISO Class ${room.tests.particleCount.isoClass}`,
+      measurement: `${room.tests.particleCount.particle05}`,
+      result: room.tests.particleCount.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+      status: room.tests.particleCount.meetsCriteria
     },
     {
       no: '6',
-      name: 'Partikül Sayısı (0.5 µm)',
-      criteria: 'ISO Class 7',
-      measurement: `${room.particleCount.average05um}`,
-      result: room.particleCount.isoClass,
-      status: room.particleCount.meetsISOStandard
+      name: 'Recovery Time',
+      criteria: room.tests.recoveryTime.criteria,
+      measurement: `${room.tests.recoveryTime.duration} dk`,
+      result: room.tests.recoveryTime.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+      status: room.tests.recoveryTime.meetsCriteria
     },
     {
       no: '7',
-      name: 'Recovery Time',
-      criteria: '≤ 25 dk',
-      measurement: `${room.recoveryTime.recoveryTime} dk`,
-      result: room.recoveryTime.result,
-      status: room.recoveryTime.meetsMaxTime
-    },
-    {
-      no: '8',
       name: 'Sıcaklık & Nem',
-      criteria: '20-24°C, 40-60%',
-      measurement: `${room.temperatureHumidity.temperature}°C, ${room.temperatureHumidity.humidity}%`,
-      result: room.temperatureHumidity.result,
-      status: room.temperatureHumidity.temperatureInRange && room.temperatureHumidity.humidityInRange
+      criteria: room.tests.temperatureHumidity.criteria,
+      measurement: `${room.tests.temperatureHumidity.temperature}°C, ${room.tests.temperatureHumidity.humidity}%`,
+      result: room.tests.temperatureHumidity.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+      status: room.tests.temperatureHumidity.meetsCriteria
     }
   ]
   
@@ -296,18 +313,27 @@ function addProfessionalFooter(worksheet: ExcelJS.Worksheet, reportData: HvacRep
 }
 
 export async function generateHvacReportPDF(reportData: HvacReportData) {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
+    throw new Error('PDF generation is only available in browser environment')
+  }
+  
   const htmlContent = generateProfessionalReportHTML(reportData)
   const fileName = `HVAC_Raporu_${reportData.reportInfo.reportNumber}_${new Date().toISOString().split('T')[0]}.pdf`
   
   // Save to reports directory (simulated with localStorage for now)
-  const reportFiles = JSON.parse(localStorage.getItem('hvac-report-files') || '{}')
-  reportFiles[reportData.id] = reportFiles[reportData.id] || {}
-  reportFiles[reportData.id].pdf = {
-    fileName,
-    createdAt: new Date().toISOString(),
-    size: htmlContent.length // Approximate size
+  try {
+    const reportFiles = JSON.parse(localStorage.getItem('hvac-report-files') || '{}')
+    reportFiles[reportData.id] = reportFiles[reportData.id] || {}
+    reportFiles[reportData.id].pdf = {
+      fileName,
+      createdAt: new Date().toISOString(),
+      size: htmlContent.length // Approximate size
+    }
+    localStorage.setItem('hvac-report-files', JSON.stringify(reportFiles))
+  } catch (error) {
+    console.warn('Could not save file info to localStorage:', error)
   }
-  localStorage.setItem('hvac-report-files', JSON.stringify(reportFiles))
   
   // Create a new window with the HTML content for printing/PDF
   const printWindow = window.open('', '_blank')
@@ -332,52 +358,60 @@ function generateProfessionalReportHTML(reportData: HvacReportData): string {
   const pages = reportData.rooms.map((room, index) => {
     const tests = [
       {
-        no: '3',
+        no: '1',
+        name: 'Hava Debisi',
+        criteria: room.tests.airflowData.criteria,
+        measurement: `${room.tests.airflowData.flowRate} m³/h`,
+        result: room.tests.airflowData.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+        status: room.tests.airflowData.meetsCriteria
+      },
+      {
+        no: '2',
         name: 'Basınç Farkı',
-        criteria: '≥ 6 Pa',
-        measurement: `${room.pressureDifference.pressure} Pa`,
-        result: room.pressureDifference.result,
-        status: room.pressureDifference.meetsMinPressure
+        criteria: room.tests.pressureDifference.criteria,
+        measurement: `${room.tests.pressureDifference.pressure} Pa`,
+        result: room.tests.pressureDifference.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+        status: room.tests.pressureDifference.meetsCriteria
+      },
+      {
+        no: '3',
+        name: 'Hava Akış Yönü',
+        criteria: 'Temiz → Kirli',
+        measurement: room.tests.airFlowDirection.observation || 'Gözlem',
+        result: room.tests.airFlowDirection.result,
+        status: room.tests.airFlowDirection.result === 'UYGUNDUR'
       },
       {
         no: '4',
-        name: 'Hava Akış Yönü',
-        criteria: 'Temiz → Kirli',
-        measurement: 'Gözlem',
-        result: room.airFlowDirection.result,
-        status: room.airFlowDirection.result === 'Uygundur'
+        name: 'HEPA Sızdırmazlık',
+        criteria: room.tests.hepaLeakage.criteria,
+        measurement: `${room.tests.hepaLeakage.actualLeakage}%`,
+        result: room.tests.hepaLeakage.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+        status: room.tests.hepaLeakage.meetsCriteria
       },
       {
         no: '5',
-        name: 'HEPA Sızdırmazlık',
-        criteria: '≤ %0.01',
-        measurement: `%${room.hepaLeakage.maxLeakage}`,
-        result: room.hepaLeakage.result,
-        status: room.hepaLeakage.meetsMaxLeakage
+        name: 'Partikül Sayısı (0.5 µm)',
+        criteria: `ISO Class ${room.tests.particleCount.isoClass}`,
+        measurement: `${room.tests.particleCount.particle05}`,
+        result: room.tests.particleCount.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+        status: room.tests.particleCount.meetsCriteria
       },
       {
         no: '6',
-        name: 'Partikül Sayısı (0.5 µm)',
-        criteria: 'ISO Class 7',
-        measurement: `${room.particleCount.average05um}`,
-        result: room.particleCount.isoClass,
-        status: room.particleCount.meetsISOStandard
+        name: 'Recovery Time',
+        criteria: room.tests.recoveryTime.criteria,
+        measurement: `${room.tests.recoveryTime.duration} dk`,
+        result: room.tests.recoveryTime.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+        status: room.tests.recoveryTime.meetsCriteria
       },
       {
         no: '7',
-        name: 'Recovery Time',
-        criteria: '≤ 25 dk',
-        measurement: `${room.recoveryTime.recoveryTime} dk`,
-        result: room.recoveryTime.result,
-        status: room.recoveryTime.meetsMaxTime
-      },
-      {
-        no: '8',
         name: 'Sıcaklık & Nem',
-        criteria: '20-24°C, 40-60%',
-        measurement: `${room.temperatureHumidity.temperature}°C, ${room.temperatureHumidity.humidity}%`,
-        result: room.temperatureHumidity.result,
-        status: room.temperatureHumidity.temperatureInRange && room.temperatureHumidity.humidityInRange
+        criteria: room.tests.temperatureHumidity.criteria,
+        measurement: `${room.tests.temperatureHumidity.temperature}°C, ${room.tests.temperatureHumidity.humidity}%`,
+        result: room.tests.temperatureHumidity.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL',
+        status: room.tests.temperatureHumidity.meetsCriteria
       }
     ]
 
@@ -407,27 +441,27 @@ function generateProfessionalReportHTML(reportData: HvacReportData): string {
           <div class="room-details">
             <div class="detail-row">
               <span class="label">Mahal No:</span>
-              <span class="value">${room.basicInfo.roomNumber}</span>
+              <span class="value">${room.roomNo}</span>
               <span class="label">Akış Biçimi:</span>
-              <span class="value">${room.basicInfo.flowType}</span>
+              <span class="value">${room.flowType}</span>
             </div>
             <div class="detail-row">
               <span class="label">Mahal Adı:</span>
-              <span class="value">${room.basicInfo.roomName}</span>
+              <span class="value">${room.roomName}</span>
               <span class="label">Test Modu:</span>
-              <span class="value">${room.basicInfo.testMode}</span>
+              <span class="value">${room.testMode}</span>
             </div>
             <div class="detail-row">
               <span class="label">Mahal Sınıfı:</span>
-              <span class="value">${room.basicInfo.roomClass}</span>
+              <span class="value">${room.roomClass}</span>
               <span class="label">Yüzey Alanı:</span>
-              <span class="value">${room.basicInfo.surfaceArea} m²</span>
+              <span class="value">${room.surfaceArea} m²</span>
             </div>
             <div class="detail-row">
               <span class="label">Yükseklik:</span>
-              <span class="value">${room.basicInfo.height} m</span>
+              <span class="value">${room.height} m</span>
               <span class="label">Hacim:</span>
-              <span class="value">${room.basicInfo.volume} m³</span>
+              <span class="value">${room.volume} m³</span>
             </div>
           </div>
         </section>

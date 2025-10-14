@@ -1,4 +1,4 @@
-import { RoomTestData, ParticleCountTest } from './hvac-types'
+import { Room } from './hvac-types'
 
 // Calculate air flow rate from velocity and filter dimensions
 export function calculateAirFlowRate(velocity: number, filterX: number, filterY: number): number {
@@ -80,20 +80,24 @@ export function validateHumidity(humidity: number): boolean {
 }
 
 // Check overall room compliance
-export function checkRoomCompliance(room: RoomTestData): boolean {
+export function checkRoomCompliance(room: Room): boolean {
+  if (!room.tests) return false
+  
   return (
-    room.pressureDifference.result === 'Uygundur' &&
-    room.airFlowDirection.result === 'Uygundur' &&
-    room.hepaLeakage.result === 'Uygundur' &&
-    room.particleCount.result === 'Uygundur' &&
-    room.recoveryTime.result === 'Uygundur' &&
-    room.temperatureHumidity.result === 'Uygundur' &&
-    (!room.noiseIllumination || room.noiseIllumination.result === 'Uygundur')
+    room.tests.pressureDifference.meetsCriteria &&
+    room.tests.airFlowDirection.result === 'UYGUNDUR' &&
+    room.tests.hepaLeakage.meetsCriteria &&
+    room.tests.particleCount.meetsCriteria &&
+    room.tests.recoveryTime.meetsCriteria &&
+    room.tests.temperatureHumidity.meetsCriteria &&
+    room.tests.airflowData.meetsCriteria
   )
 }
 
 // Generate final assessment
-export function generateFinalAssessment(rooms: RoomTestData[]): string {
+export function generateFinalAssessment(rooms: Room[]): string {
+  if (!rooms || rooms.length === 0) return "Veri bulunamadı."
+  
   const allCompliant = rooms.every(room => checkRoomCompliance(room))
   return allCompliant 
     ? "Sistem, referans standartlara UYGUNDUR."

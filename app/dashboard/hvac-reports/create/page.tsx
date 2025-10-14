@@ -26,14 +26,32 @@ export default function CreateHvacReportPage() {
   }
   
   const handleSaveReport = (reportData: HvacReportData) => {
-    // Save to localStorage (in production, this would be an API call)
-    const existingReports = localStorage.getItem('hvac-reports')
-    const reports = existingReports ? JSON.parse(existingReports) : []
-    reports.push(reportData)
-    localStorage.setItem('hvac-reports', JSON.stringify(reports))
+    // Check if localStorage is available
+    if (typeof window === 'undefined' || !window.localStorage) {
+      alert('Bu özellik mobil cihazlarda desteklenmemektedir. Lütfen masaüstü tarayıcı kullanın.')
+      return
+    }
     
-    // Redirect to reports list
-    router.push('/dashboard/hvac-reports')
+    try {
+      // Save to localStorage (in production, this would be an API call)
+      const existingReports = localStorage.getItem('hvac-reports')
+      const reports = existingReports ? JSON.parse(existingReports) : []
+      
+      // Validate reports array
+      if (!Array.isArray(reports)) {
+        localStorage.removeItem('hvac-reports')
+        reports = []
+      }
+      
+      reports.push(reportData)
+      localStorage.setItem('hvac-reports', JSON.stringify(reports))
+      
+      // Redirect to reports list
+      router.push('/dashboard/hvac-reports')
+    } catch (error) {
+      console.error('Error saving report:', error)
+      alert('Rapor kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.')
+    }
   }
   
   return (
