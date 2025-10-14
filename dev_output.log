@@ -1,0 +1,112 @@
+
+> my-v0-project@0.1.0 dev /home/furkan/Masaüstü/trical 1
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+   ▲ Next.js 15.2.4
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.13:3001
+
+ ✓ Starting...
+ ✓ Ready in 2.4s
+ ○ Compiling / ...
+ ✓ Compiled / in 5.6s (742 modules)
+ GET / 200 in 6380ms
+ GET / 200 in 115ms
+ GET / 200 in 38ms
+ ○ Compiling /hizmetler ...
+ ✓ Compiled /hizmetler in 623ms (749 modules)
+ GET / 200 in 191ms
+ GET /hizmetler 200 in 827ms
+ GET /hizmetler 200 in 62ms
+ ✓ Compiled /urunler in 332ms (745 modules)
+ GET /urunler 200 in 451ms
+ GET /hizmetler 200 in 69ms
+ ✓ Compiled /_not-found in 288ms (749 modules)
+ GET /calibration-validation-medical-equipment.jpg 404 in 467ms
+ GET /hvac-system-monitoring-hospital.jpg 404 in 457ms
+ GET /technical-service-medical-devices.jpg 404 in 466ms
+ GET /urunler 200 in 88ms
+ ✓ Compiled /hakkimizda in 289ms (755 modules)
+ GET /hakkimizda 200 in 374ms
+ GET /medical-engineering-team-laboratory.jpg 404 in 68ms
+ ○ Compiling /iletisim ...
+ ✓ Compiled /iletisim in 916ms (782 modules)
+ GET /iletisim 200 in 978ms
+ GET /hakkimizda 200 in 46ms
+ GET /medical-engineering-team-laboratory.jpg 404 in 60ms
+ GET /urunler 200 in 73ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 617ms (821 modules)
+ GET /login 200 in 760ms
+ ✓ Compiled /middleware in 450ms (101 modules)
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 566ms (830 modules)
+ GET /dashboard 200 in 686ms
+ ○ Compiling /dashboard/devices ...
+ ✓ Compiled /dashboard/devices in 1863ms (1030 modules)
+ GET /dashboard/devices 200 in 1957ms
+ ○ Compiling /dashboard/calibrations ...
+ ✓ Compiled /dashboard/calibrations in 612ms (1048 modules)
+ GET /dashboard/calibrations 200 in 671ms
+ ✓ Compiled /dashboard/reports in 451ms (1056 modules)
+ GET /dashboard/reports 200 in 508ms
+ ○ Compiling /dashboard/users ...
+ ✓ Compiled /dashboard/users in 536ms (1070 modules)
+ GET /dashboard/users 200 in 588ms
+ GET /login 200 in 21ms
+ GET /login 200 in 26ms
+ GET /dashboard 200 in 35ms
+ GET /login 200 in 17ms
+ GET /login 200 in 14ms
+ GET /login 200 in 33ms
+ GET /login 200 in 26ms
+ GET / 200 in 151ms
+ GET /urunler 200 in 84ms
+ GET / 200 in 32ms
+ GET /hizmetler 200 in 63ms
+ GET /calibration-validation-medical-equipment.jpg 404 in 90ms
+ GET /technical-service-medical-devices.jpg 404 in 90ms
+ GET /hvac-system-monitoring-hospital.jpg 404 in 37ms
+ GET /urunler 200 in 48ms
+ GET /hakkimizda 200 in 47ms
+ GET /medical-engineering-team-laboratory.jpg 404 in 38ms
+ GET /iletisim 200 in 18ms
+ GET / 200 in 27ms
+ GET /urunler 200 in 43ms
+ GET /login 200 in 14ms
+ GET /dashboard 200 in 16ms
+ GET /dashboard/devices 200 in 29ms
+ GET /dashboard/calibrations 200 in 24ms
+ GET /dashboard/reports 200 in 21ms
+ GET /dashboard/calibrations 200 in 16ms
+ GET /dashboard/devices 200 in 18ms
+ GET /dashboard 200 in 13ms
+ GET /login 200 in 21ms
+ GET /login 200 in 19ms
+ GET / 200 in 95ms
+ GET /hizmetler 200 in 55ms
+ GET /technical-service-medical-devices.jpg 404 in 98ms
+ GET /calibration-validation-medical-equipment.jpg 404 in 101ms
+ GET /hvac-system-monitoring-hospital.jpg 404 in 41ms
+ GET /hizmetler 200 in 44ms
+ GET / 200 in 38ms
+ GET /hizmetler 200 in 41ms
+ GET /technical-service-medical-devices.jpg 404 in 113ms
+ GET /calibration-validation-medical-equipment.jpg 404 in 114ms
+ GET /hvac-system-monitoring-hospital.jpg 404 in 113ms
+ GET /urunler 200 in 51ms
+ GET /hakkimizda 200 in 44ms
+ GET /medical-engineering-team-laboratory.jpg 404 in 35ms
+ GET /iletisim 200 in 15ms
+ GET /hakkimizda 200 in 30ms
+ GET /medical-engineering-team-laboratory.jpg 404 in 50ms
+ GET /urunler 200 in 49ms
+ GET /hizmetler 200 in 41ms
+ GET /calibration-validation-medical-equipment.jpg 404 in 115ms
+ GET /technical-service-medical-devices.jpg 404 in 115ms
+ GET /hvac-system-monitoring-hospital.jpg 404 in 115ms
+ GET / 200 in 43ms
+ GET / 200 in 33ms
+ ELIFECYCLE  Command failed.
+[?25h
