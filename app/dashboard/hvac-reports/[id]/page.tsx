@@ -27,11 +27,10 @@ export default function HvacReportViewPage() {
   }, [user, isLoading, router])
   
   useEffect(() => {
-    if (params.id) {
-      // Load report from storage
-      const savedReports = localStorage.getItem('hvac-reports')
-      if (savedReports) {
-        try {
+    if (params.id && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedReports = localStorage.getItem('hvac-reports')
+        if (savedReports) {
           const reports: HvacReportData[] = JSON.parse(savedReports)
           const foundReport = reports.find(r => r.id === params.id)
           if (foundReport) {
@@ -39,13 +38,17 @@ export default function HvacReportViewPage() {
           } else {
             router.push('/dashboard/hvac-reports')
           }
-        } catch (error) {
-          console.error('Error loading HVAC report:', error)
+        } else {
           router.push('/dashboard/hvac-reports')
         }
-      } else {
+      } catch (error) {
+        console.error('Error loading HVAC report:', error)
         router.push('/dashboard/hvac-reports')
       }
+    } else if (params.id && typeof window !== 'undefined') {
+      // localStorage not available
+      alert('Bu özellik mobil cihazlarda tam olarak desteklenmemektedir.')
+      router.push('/dashboard/hvac-reports')
     }
   }, [params.id, router])
   
@@ -58,9 +61,13 @@ export default function HvacReportViewPage() {
   }
   
   const handleDownloadPDF = async () => {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      alert('Bu özellik mobil cihazlarda desteklenmemektedir.')
+      return
+    }
+    
     try {
       await generateHvacReportPDF(report)
-      // Refresh to show updated files
       window.location.reload()
     } catch (error) {
       console.error('Error generating PDF:', error)
@@ -69,9 +76,13 @@ export default function HvacReportViewPage() {
   }
   
   const handleDownloadExcel = async () => {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      alert('Bu özellik mobil cihazlarda desteklenmemektedir.')
+      return
+    }
+    
     try {
       await generateHvacReportExcel(report)
-      // Refresh to show updated files
       window.location.reload()
     } catch (error) {
       console.error('Error generating Excel:', error)

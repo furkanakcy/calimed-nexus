@@ -26,10 +26,16 @@ export function HvacReportFiles({ reportId, reportNumber }: HvacReportFilesProps
   const [files, setFiles] = useState<ReportFiles>({})
   
   useEffect(() => {
-    // Load report files from storage
-    const reportFiles = JSON.parse(localStorage.getItem('hvac-report-files') || '{}')
-    if (reportFiles[reportId]) {
-      setFiles(reportFiles[reportId])
+    // Load report files from storage - with mobile safety checks
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const reportFiles = JSON.parse(localStorage.getItem('hvac-report-files') || '{}')
+        if (reportFiles[reportId]) {
+          setFiles(reportFiles[reportId])
+        }
+      } catch (error) {
+        console.error('Error loading report files:', error)
+      }
     }
   }, [reportId])
   
@@ -46,6 +52,11 @@ export function HvacReportFiles({ reportId, reportNumber }: HvacReportFilesProps
   }
   
   const handleDownload = (file: ReportFile, type: 'pdf' | 'excel') => {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      alert('Bu özellik mobil cihazlarda desteklenmemektedir.')
+      return
+    }
+    
     // In a real application, this would download from the server
     // For now, we'll show a message
     alert(`${file.fileName} dosyası indirilecek. (Gerçek uygulamada sunucudan indirilir)`)

@@ -22,14 +22,20 @@ export default function HvacReportsPage() {
   }, [user, isLoading, router])
   
   useEffect(() => {
-    // Load reports from storage
-    const savedReports = localStorage.getItem('hvac-reports')
-    if (savedReports) {
+    // Load reports from storage - with mobile safety checks
+    if (typeof window !== 'undefined' && window.localStorage) {
       try {
-        const parsedReports = JSON.parse(savedReports)
-        setReports(parsedReports)
+        const savedReports = localStorage.getItem('hvac-reports')
+        if (savedReports) {
+          const parsedReports = JSON.parse(savedReports)
+          if (Array.isArray(parsedReports)) {
+            setReports(parsedReports)
+          }
+        }
       } catch (error) {
-        console.error('Error parsing HVAC reports:', error)
+        console.error('Error loading HVAC reports:', error)
+        // Clear corrupted data
+        localStorage.removeItem('hvac-reports')
       }
     }
   }, [])
@@ -51,13 +57,17 @@ export default function HvacReportsPage() {
   }
   
   const handleDownloadReport = async (id: string, format: 'pdf' | 'excel') => {
-    // Load the report data
-    const savedReports = localStorage.getItem('hvac-reports')
-    if (savedReports) {
-      const reports: HvacReportData[] = JSON.parse(savedReports)
-      const report = reports.find(r => r.id === id)
-      if (report) {
-        try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      alert('Bu özellik mobil cihazlarda desteklenmemektedir.')
+      return
+    }
+    
+    try {
+      const savedReports = localStorage.getItem('hvac-reports')
+      if (savedReports) {
+        const reports: HvacReportData[] = JSON.parse(savedReports)
+        const report = reports.find(r => r.id === id)
+        if (report) {
           if (format === 'pdf') {
             await generateHvacReportPDF(report)
           } else {
@@ -65,11 +75,11 @@ export default function HvacReportsPage() {
           }
           // Refresh the page to show updated file status
           window.location.reload()
-        } catch (error) {
-          console.error('Error generating report:', error)
-          alert('Rapor oluşturulurken bir hata oluştu.')
         }
       }
+    } catch (error) {
+      console.error('Error generating report:', error)
+      alert('Rapor oluşturulurken bir hata oluştu.')
     }
   }
   
@@ -117,30 +127,50 @@ export default function HvacReportsPage() {
                     
                     {/* Show file status */}
                     {(() => {
-                      const reportFiles = JSON.parse(localStorage.getItem('hvac-report-files') || '{}')
-                      const files = reportFiles[report.id] || {}
-                      const hasFiles = files.pdf || files.excel
+                      if (typeof window === 'undefined' || !window.localStorage) {
+                        return (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
+                              Dosya durumu yüklenemedi
+                            </span>
+                          </div>
+                        )
+                      }
                       
-                      return hasFiles ? (
-                        <div className="flex gap-1 mt-2">
-                          {files.pdf && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-                              PDF
+                      try {
+                        const reportFiles = JSON.parse(localStorage.getItem('hvac-report-files') || '{}')
+                        const files = reportFiles[report.id] || {}
+                        const hasFiles = files.pdf || files.excel
+                        
+                        return hasFiles ? (
+                          <div className="flex gap-1 mt-2">
+                            {files.pdf && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                                PDF
+                              </span>
+                            )}
+                            {files.excel && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                                Excel
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
+                              Dosya yok
                             </span>
-                          )}
-                          {files.excel && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                              Excel
+                          </div>
+                        )
+                      } catch (error) {
+                        return (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-yellow-50 text-yellow-600 border border-yellow-200">
+                              Dosya durumu hatası
                             </span>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="mt-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
-                            Dosya yok
-                          </span>
-                        </div>
-                      )
+                          </div>
+                        )
+                      }
                     })()}
                   </div>
                   <div className="mt-4 flex justify-end gap-2">
