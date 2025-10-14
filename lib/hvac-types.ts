@@ -3,100 +3,110 @@ export interface HvacReportInfo {
   reportNumber: string
   measurementDate: string
   testerName: string
-  reportPreparedBy: string
-  approvedBy: string
+  reportPreparerName: string
+  approverName: string
   organizationName: string
   logo?: string
-  stamp?: string
+  seal?: string
 }
 
-export interface RoomBasicInfo {
-  roomNumber: string
+export enum TestMode {
+  AtRest = 'At Rest',
+  InOperation = 'In Operation'
+}
+
+export enum FlowType {
+  Turbulence = 'Turbulence',
+  Laminar = 'Laminar',
+  Unidirectional = 'Unidirectional'
+}
+
+export enum RoomClass {
+  ClassIB = 'Class IB',
+  ClassII = 'Class II',
+  IntensiveCare = 'Intensive Care',
+  Other = 'Other'
+}
+
+export interface Room {
+  id: string
+  roomNo: string
   roomName: string
   surfaceArea: number
   height: number
-  volume: number // Calculated: surfaceArea * height
-  testMode: 'At Rest' | 'In Operation'
-  flowType: 'Turbulence' | 'Laminar' | 'Unidirectional'
-  roomClass: string
+  volume: number
+  testMode: TestMode
+  flowType: FlowType
+  roomClass: RoomClass
+  tests: TestsData
 }
 
-export interface AirFlowTest {
-  velocity: number // m/s
-  filterSizeX: number // mm
-  filterSizeY: number // mm
-  flowRate: number // m³/h - calculated
-  totalFlowRate: number // m³/h
-  airChangeRate: number // 1/hour - calculated
-  meetsMinCriteria: boolean
+export interface AirflowData {
+  speed: number
+  filterDimensionX: number
+  filterDimensionY: number
+  flowRate: number
+  totalFlowRate: number
+  airChangeRate: number
+  meetsCriteria: boolean
+  criteria: string
 }
 
-export interface PressureDifferenceTest {
-  pressure: number // Pa
+export interface PressureDifference {
+  pressure: number
   referenceArea: string
-  meetsMinPressure: boolean // >= 6 Pa
-  result: 'Uygundur' | 'Uygun Değil'
+  meetsCriteria: boolean
+  criteria: string
 }
 
-export interface AirFlowDirectionTest {
+export interface AirFlowDirection {
   direction: string
-  result: 'Uygundur' | 'Uygun Değil'
+  result: string
+  observation: string
 }
 
-export interface HepaLeakageTest {
-  maxLeakage: number // %
-  meetsMaxLeakage: boolean // <= 0.01%
-  result: 'Uygundur' | 'Uygun Değil'
+export interface HepaLeakage {
+  maxLeakage: number
+  actualLeakage: number
+  meetsCriteria: boolean
+  criteria: string
 }
 
-export interface ParticleCountTest {
-  particles05um: number[]
-  particles50um: number[]
-  average05um: number
-  average50um: number
+export interface ParticleCount {
+  particle05: number
+  particle5: number
+  average: number
   isoClass: string
-  meetsISOStandard: boolean
-  result: 'Uygundur' | 'Uygun Değil'
+  meetsCriteria: boolean
 }
 
-export interface RecoveryTimeTest {
-  recoveryTime: number // minutes
-  meetsMaxTime: boolean // <= 25 minutes
-  result: 'Uygundur' | 'Uygun Değil'
+export interface RecoveryTime {
+  duration: number
+  meetsCriteria: boolean
+  criteria: string
 }
 
-export interface TemperatureHumidityTest {
-  temperature: number // °C
-  humidity: number // %
-  temperatureInRange: boolean // 20-24°C
-  humidityInRange: boolean // 40-60%
-  result: 'Uygundur' | 'Uygun Değil'
+export interface TemperatureHumidity {
+  temperature: number
+  humidity: number
+  meetsCriteria: boolean
+  criteria: string
 }
 
-export interface NoiseIlluminationTest {
-  noise: number // dB
-  illumination: number // Lux
-  meetsIESTStandard: boolean
-  result: 'Uygundur' | 'Uygun Değil'
-}
-
-export interface RoomTestData {
-  id: string
-  basicInfo: RoomBasicInfo
-  airFlow: AirFlowTest
-  pressureDifference: PressureDifferenceTest
-  airFlowDirection: AirFlowDirectionTest
-  hepaLeakage: HepaLeakageTest
-  particleCount: ParticleCountTest
-  recoveryTime: RecoveryTimeTest
-  temperatureHumidity: TemperatureHumidityTest
-  noiseIllumination?: NoiseIlluminationTest
+export interface TestsData {
+  airflowData: AirflowData
+  pressureDifference: PressureDifference
+  airFlowDirection: AirFlowDirection
+  hepaLeakage: HepaLeakage
+  particleCount: ParticleCount
+  recoveryTime: RecoveryTime
+  temperatureHumidity: TemperatureHumidity
 }
 
 export interface HvacReportData {
   id: string
   reportInfo: HvacReportInfo
-  rooms: RoomTestData[]
+  rooms: Room[]
   createdAt: string
   updatedAt: string
 }
