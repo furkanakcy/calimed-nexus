@@ -8,12 +8,18 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlusIcon, FileTextIcon, DownloadIcon } from "@/components/icons"
 import { HvacReportData } from "@/lib/hvac-types"
-import { generateHvacReportPDF, generateHvacReportExcel } from "@/lib/hvac-report-generator"
+import { generateSimplePDF, generateSimpleExcel } from "@/lib/simple-report-generator"
+import { DownloadModal } from "@/components/download-modal"
 
 export default function HvacReportsPage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
   const [reports, setReports] = useState<HvacReportData[]>([])
+  const [downloadModal, setDownloadModal] = useState<{ isOpen: boolean; reportId: string; reportNumber: string }>({
+    isOpen: false,
+    reportId: '',
+    reportNumber: ''
+  })
   
   useEffect(() => {
     if (!isLoading && !user) {
@@ -56,7 +62,7 @@ export default function HvacReportsPage() {
     router.push(`/dashboard/hvac-reports/${id}`)
   }
   
-  const handleDownloadReport = async (id: string, format: 'pdf' | 'excel') => {
+  const handleDownloadReport = async (format: 'pdf' | 'excel') => {
     if (typeof window === 'undefined' || !window.localStorage) {
       alert('Bu özellik mobil cihazlarda desteklenmemektedir.')
       return
@@ -66,21 +72,31 @@ export default function HvacReportsPage() {
       const savedReports = localStorage.getItem('hvac-reports')
       if (savedReports) {
         const reports: HvacReportData[] = JSON.parse(savedReports)
-        const report = reports.find(r => r.id === id)
+        const report = reports.find(r => r.id === downloadModal.reportId)
         if (report) {
           if (format === 'pdf') {
-            await generateHvacReportPDF(report)
+            generateSimplePDF(report)
           } else {
-            await generateHvacReportExcel(report)
+            generateSimpleExcel(report)
           }
           // Refresh the page to show updated file status
-          window.location.reload()
+          setTimeout(() => {
+            window.location.reload()
+          }, 1000)
         }
       }
     } catch (error) {
       console.error('Error generating report:', error)
       alert('Rapor oluşturulurken bir hata oluştu.')
     }
+  }
+
+  const openDownloadModal = (reportId: string, reportNumber: string) => {
+    setDownloadModal({ isOpen: true, reportId, reportNumber })
+  }
+
+  const closeDownloadModal = () => {
+    setDownloadModal({ isOpen: false, reportId: '', reportNumber: '' })
   }
   
   return (
@@ -185,18 +201,10 @@ export default function HvacReportsPage() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleDownloadReport(report.id, 'pdf')}
+                      onClick={() => openDownloadModal(report.id, report.reportInfo.reportNumber)}
                     >
                       <DownloadIcon size={16} className="mr-1" />
-                      PDF
-                    </Button>
-                    <Button 
-                      size="sm"
-                      onClick={() => handleDownloadReport(report.id, 'excel')}
-                      className="bg-[#0B5AA3] hover:bg-[#094a8a]"
-                    >
-                      <DownloadIcon size={16} className="mr-1" />
-                      Excel
+                      İndir
                     </Button>
                   </div>
                 </CardContent>
@@ -204,6 +212,13 @@ export default function HvacReportsPage() {
             ))}
           </div>
         )}
+
+        <DownloadModal
+          isOpen={downloadModal.isOpen}
+          onClose={closeDownloadModal}
+          onDownload={handleDownloadReport}
+          reportNumber={downloadModal.reportNumber}
+        />
       </div>
     </DashboardLayout>
   )

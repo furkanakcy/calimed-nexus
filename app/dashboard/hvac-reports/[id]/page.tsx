@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ArrowRightIcon, DownloadIcon, EditIcon } from "@/components/icons"
 import { HvacReportData } from "@/lib/hvac-types"
-import { generateHvacReportPDF, generateHvacReportExcel } from "@/lib/hvac-report-generator"
+import { generateSimplePDF, generateSimpleExcel } from "@/lib/simple-report-generator"
+import { DownloadModal } from "@/components/download-modal"
 import { checkRoomCompliance, generateFinalAssessment } from "@/lib/hvac-calculations"
 import { HvacReportFiles } from "@/components/hvac-report-files"
 
@@ -19,6 +20,7 @@ export default function HvacReportViewPage() {
   const router = useRouter()
   const params = useParams()
   const [report, setReport] = useState<HvacReportData | null>(null)
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false)
   
   useEffect(() => {
     if (!isLoading && !user) {
@@ -67,26 +69,34 @@ export default function HvacReportViewPage() {
     }
     
     try {
-      await generateHvacReportPDF(report)
-      window.location.reload()
+      generateSimplePDF(report)
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     } catch (error) {
       console.error('Error generating PDF:', error)
       alert('PDF oluşturulurken bir hata oluştu.')
     }
   }
   
-  const handleDownloadExcel = async () => {
-    if (typeof window === 'undefined' || !window.localStorage) {
+  const handleModalDownload = async (format: 'pdf' | 'excel') => {
+    if (typeof window === 'undefined' || !window.localStorage || !report) {
       alert('Bu özellik mobil cihazlarda desteklenmemektedir.')
       return
     }
     
     try {
-      await generateHvacReportExcel(report)
-      window.location.reload()
+      if (format === 'pdf') {
+        generateSimplePDF(report)
+      } else {
+        generateSimpleExcel(report)
+      }
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     } catch (error) {
-      console.error('Error generating Excel:', error)
-      alert('Excel oluşturulurken bir hata oluştu.')
+      console.error('Error generating report:', error)
+      alert('Rapor oluşturulurken bir hata oluştu.')
     }
   }
   
@@ -114,18 +124,11 @@ export default function HvacReportViewPage() {
           
           <div className="flex gap-2">
             <Button
-              variant="outline"
-              onClick={handleDownloadPDF}
-            >
-              <DownloadIcon size={16} className="mr-2" />
-              PDF İndir
-            </Button>
-            <Button
-              onClick={handleDownloadExcel}
+              onClick={() => setDownloadModalOpen(true)}
               className="bg-[#0B5AA3] hover:bg-[#094a8a]"
             >
               <DownloadIcon size={16} className="mr-2" />
-              Excel İndir
+              Raporu İndir
             </Button>
           </div>
         </div>
@@ -325,6 +328,13 @@ export default function HvacReportViewPage() {
         <HvacReportFiles 
           reportId={report.id} 
           reportNumber={report.reportInfo.reportNumber} 
+        />
+
+        <DownloadModal
+          isOpen={downloadModalOpen}
+          onClose={() => setDownloadModalOpen(false)}
+          onDownload={handleModalDownload}
+          reportNumber={report.reportInfo.reportNumber}
         />
         
         {/* Report Metadata */}

@@ -25,7 +25,7 @@ export async function generateHvacReportExcel(reportData: HvacReportData) {
   
   // Create a worksheet for each room
   reportData.rooms.forEach((room, index) => {
-    const worksheet = workbook.addWorksheet(`${room.basicInfo.roomName || `Oda ${index + 1}`}`)
+    const worksheet = workbook.addWorksheet(`${room.roomName || `Oda ${index + 1}`}`)
     
     // Set page setup for professional printing
     worksheet.pageSetup = {
