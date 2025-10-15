@@ -335,20 +335,37 @@ export async function generateHvacReportPDF(reportData: HvacReportData) {
     console.warn('Could not save file info to localStorage:', error)
   }
   
-  // Create a new window with the HTML content for printing/PDF
-  const printWindow = window.open('', '_blank')
-  if (printWindow) {
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-    printWindow.focus()
+  // For production environments like Render.com, use a different approach
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    // Create a blob and download directly
+    const blob = new Blob([htmlContent], { type: 'text/html' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName.replace('.pdf', '.html')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
     
-    // Set the document title for PDF
-    printWindow.document.title = fileName
-    
-    // Trigger print dialog after content loads
-    setTimeout(() => {
-      printWindow.print()
-    }, 1000)
+    // Show instructions for PDF conversion
+    alert(`HTML dosyası indirildi: ${fileName.replace('.pdf', '.html')}\n\nPDF'e dönüştürmek için:\n1. İndirilen HTML dosyasını tarayıcıda açın\n2. Ctrl+P (veya Cmd+P) ile yazdır\n3. "PDF olarak kaydet" seçeneğini seçin`)
+  } else {
+    // Local development - use print dialog
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(htmlContent)
+      printWindow.document.close()
+      printWindow.focus()
+      
+      // Set the document title for PDF
+      printWindow.document.title = fileName
+      
+      // Trigger print dialog after content loads
+      setTimeout(() => {
+        printWindow.print()
+      }, 1000)
+    }
   }
   
   return fileName

@@ -6,7 +6,9 @@
     "build": "NODE_OPTIONS='--max-old-space-size=1024' next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "postbuild": "echo 'Build completed successfully'",
+    "health": "curl -f http://localhost:$PORT/ || exit 1"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

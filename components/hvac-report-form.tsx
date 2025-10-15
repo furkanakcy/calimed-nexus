@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { PlusIcon, TrashIcon } from "@/components/icons"
-import { HvacReportData, RoomTestData, HvacReportInfo } from "@/lib/hvac-types"
+import { HvacReportData, Room, HvacReportInfo, TestMode, FlowType, RoomClass } from "@/lib/hvac-types"
 import {
   calculateAirFlowRate,
   calculateAirChangeRate,
@@ -52,7 +52,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
     approvedBy: "",
     organizationName: "BC Laboratuvarı"
   })
-  const [rooms, setRooms] = useState<RoomTestData[]>([])
+  const [rooms, setRooms] = useState<Room[]>([])
 
   const {
     register: registerInfo,
@@ -71,170 +71,180 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
   ]
 
   const addRoom = () => {
-    const newRoom: RoomTestData = {
+    const newRoom: Room = {
       id: `room-${Date.now()}`,
-      basicInfo: {
-        roomNumber: "",
-        roomName: "",
-        surfaceArea: 0,
-        height: 0,
-        volume: 0,
-        testMode: "At Rest",
-        flowType: "Turbulence",
-        roomClass: "Sınıf II"
-      },
-      airFlow: {
-        velocity: 0,
-        filterSizeX: 0,
-        filterSizeY: 0,
-        flowRate: 0,
-        totalFlowRate: 0,
-        airChangeRate: 0,
-        meetsMinCriteria: false
-      },
-      pressureDifference: {
-        pressure: 0,
-        referenceArea: "",
-        meetsMinPressure: false,
-        result: "Uygun Değil"
-      },
-      airFlowDirection: {
-        direction: "Temiz → Kirli",
-        result: "Uygundur"
-      },
-      hepaLeakage: {
-        maxLeakage: 0,
-        meetsMaxLeakage: false,
-        result: "Uygun Değil"
-      },
-      particleCount: {
-        particles05um: [],
-        particles50um: [],
-        average05um: 0,
-        average50um: 0,
-        isoClass: "",
-        meetsISOStandard: false,
-        result: "Uygun Değil"
-      },
-      recoveryTime: {
-        recoveryTime: 0,
-        meetsMaxTime: false,
-        result: "Uygun Değil"
-      },
-      temperatureHumidity: {
-        temperature: 0,
-        humidity: 0,
-        temperatureInRange: false,
-        humidityInRange: false,
-        result: "Uygun Değil"
+      roomNo: "",
+      roomName: "",
+      surfaceArea: 0,
+      height: 0,
+      volume: 0,
+      testMode: TestMode.AtRest,
+      flowType: FlowType.Turbulence,
+      roomClass: RoomClass.ClassII,
+      tests: {
+        airflowData: {
+          speed: 0,
+          filterDimensionX: 0,
+          filterDimensionY: 0,
+          flowRate: 0,
+          totalFlowRate: 0,
+          airChangeRate: 0,
+          meetsCriteria: false,
+          criteria: ''
+        },
+        pressureDifference: {
+          pressure: 0,
+          referenceArea: "",
+          meetsCriteria: false,
+          criteria: '≥ 6 Pa'
+        },
+        airFlowDirection: {
+          direction: "Temiz→Kirli",
+          result: "UYGUNDUR",
+          observation: ""
+        },
+        hepaLeakage: {
+          maxLeakage: 0,
+          actualLeakage: 0,
+          meetsCriteria: false,
+          criteria: '≤ %0.01'
+        },
+        particleCount: {
+          particle05: 0,
+          particle5: 0,
+          average: 0,
+          isoClass: "",
+          meetsCriteria: false
+        },
+        recoveryTime: {
+          duration: 0,
+          meetsCriteria: false,
+          criteria: '≤ 25 dk'
+        },
+        temperatureHumidity: {
+          temperature: 0,
+          humidity: 0,
+          meetsCriteria: false,
+          criteria: '20-24°C, 40-60%'
+        }
       }
     }
-    setRooms([...rooms, newRoom])
+    
+    try {
+      setRooms([...rooms, newRoom])
+    } catch (error) {
+      console.error('Error adding room:', error)
+      alert('Oda eklenirken bir hata oluştu.')
+    }
   }
 
   const removeRoom = (roomId: string) => {
     setRooms(rooms.filter(room => room.id !== roomId))
   }
 
-  const updateRoom = (roomId: string, updates: Partial<RoomTestData>) => {
-    setRooms(rooms.map(room =>
-      room.id === roomId ? { ...room, ...updates } : room
-    ))
+  const updateRoom = (roomId: string, updates: Partial<Room>) => {
+    try {
+      setRooms(rooms.map(room =>
+        room.id === roomId ? { ...room, ...updates } : room
+      ))
+    } catch (error) {
+      console.error('Error updating room:', error)
+      alert('Oda güncellenirken bir hata oluştu.')
+    }
   }
 
   const updateRoomBasicInfo = (roomId: string, field: string, value: any) => {
-    const room = rooms.find(r => r.id === roomId)
-    if (!room) return
+    try {
+      const room = rooms.find(r => r.id === roomId)
+      if (!room) return
 
-    const updatedBasicInfo = { ...room.basicInfo, [field]: value }
+      const updatedRoom = { ...room, [field]: value }
 
-    // Auto-calculate volume when area or height changes
-    if (field === 'surfaceArea' || field === 'height') {
-      updatedBasicInfo.volume = calculateRoomVolume(
-        updatedBasicInfo.surfaceArea,
-        updatedBasicInfo.height
-      )
+      // Auto-calculate volume when area or height changes
+      if (field === 'surfaceArea' || field === 'height') {
+        updatedRoom.volume = calculateRoomVolume(
+          updatedRoom.surfaceArea,
+          updatedRoom.height
+        )
+      }
+
+      updateRoom(roomId, updatedRoom)
+    } catch (error) {
+      console.error('Error updating room basic info:', error)
+      alert('Oda bilgileri güncellenirken bir hata oluştu.')
     }
-
-    updateRoom(roomId, { basicInfo: updatedBasicInfo })
   }
 
   const updateRoomTestData = (roomId: string, testType: string, field: string, value: any) => {
-    const room = rooms.find(r => r.id === roomId)
-    if (!room) return
+    try {
+      const room = rooms.find(r => r.id === roomId)
+      if (!room) return
 
-    const updatedRoom = { ...room }
+      const updatedRoom = { ...room }
+      const updatedTests = { ...updatedRoom.tests }
 
-    // Update the specific test data
-    if (testType === 'pressureDifference') {
-      updatedRoom.pressureDifference = {
-        ...updatedRoom.pressureDifference,
-        [field]: value
-      }
-
-      // Auto-validate pressure
-      if (field === 'pressure') {
-        updatedRoom.pressureDifference.meetsMinPressure = validatePressureDifference(value)
-        updatedRoom.pressureDifference.result = updatedRoom.pressureDifference.meetsMinPressure ? 'Uygundur' : 'Uygun Değil'
-      }
-    } else if (testType === 'hepaLeakage') {
-      updatedRoom.hepaLeakage = {
-        ...updatedRoom.hepaLeakage,
-        [field]: value
-      }
-
-      // Auto-validate HEPA leakage
-      if (field === 'maxLeakage') {
-        updatedRoom.hepaLeakage.meetsMaxLeakage = validateHepaLeakage(value)
-        updatedRoom.hepaLeakage.result = updatedRoom.hepaLeakage.meetsMaxLeakage ? 'Uygundur' : 'Uygun Değil'
-      }
-    } else if (testType === 'particleCount') {
-      updatedRoom.particleCount = {
-        ...updatedRoom.particleCount,
-        [field]: value
-      }
-
-      // Auto-calculate averages and ISO class
-      if (field === 'particles05um' || field === 'particles50um') {
-        if (field === 'particles05um') {
-          updatedRoom.particleCount.average05um = calculateParticleAverage(value)
-          updatedRoom.particleCount.isoClass = determineISOClass(updatedRoom.particleCount.average05um)
-          updatedRoom.particleCount.meetsISOStandard = meetsISOStandard(updatedRoom.particleCount.average05um)
-        } else {
-          updatedRoom.particleCount.average50um = calculateParticleAverage(value)
+      // Update the specific test data
+      if (testType === 'pressureDifference') {
+        updatedTests.pressureDifference = {
+          ...updatedTests.pressureDifference,
+          [field]: value
         }
-        updatedRoom.particleCount.result = updatedRoom.particleCount.meetsISOStandard ? 'Uygundur' : 'Uygun Değil'
-      }
-    } else if (testType === 'recoveryTime') {
-      updatedRoom.recoveryTime = {
-        ...updatedRoom.recoveryTime,
-        [field]: value
+
+        // Auto-validate pressure
+        if (field === 'pressure') {
+          updatedTests.pressureDifference.meetsCriteria = validatePressureDifference(value)
+        }
+      } else if (testType === 'hepaLeakage') {
+        updatedTests.hepaLeakage = {
+          ...updatedTests.hepaLeakage,
+          [field]: value
+        }
+
+        // Auto-validate HEPA leakage
+        if (field === 'actualLeakage') {
+          updatedTests.hepaLeakage.meetsCriteria = validateHepaLeakage(value)
+        }
+      } else if (testType === 'particleCount') {
+        updatedTests.particleCount = {
+          ...updatedTests.particleCount,
+          [field]: value
+        }
+
+        // Auto-calculate averages and ISO class
+        if (field === 'particle05') {
+          updatedTests.particleCount.isoClass = determineISOClass(value)
+          updatedTests.particleCount.meetsCriteria = meetsISOStandard(value)
+        }
+      } else if (testType === 'recoveryTime') {
+        updatedTests.recoveryTime = {
+          ...updatedTests.recoveryTime,
+          [field]: value
+        }
+
+        // Auto-validate recovery time
+        if (field === 'duration') {
+          updatedTests.recoveryTime.meetsCriteria = validateRecoveryTime(value)
+        }
+      } else if (testType === 'temperatureHumidity') {
+        updatedTests.temperatureHumidity = {
+          ...updatedTests.temperatureHumidity,
+          [field]: value
+        }
+
+        // Auto-validate temperature and humidity
+        if (field === 'temperature' || field === 'humidity') {
+          const tempValid = field === 'temperature' ? validateTemperature(value) : validateTemperature(updatedTests.temperatureHumidity.temperature)
+          const humidValid = field === 'humidity' ? validateHumidity(value) : validateHumidity(updatedTests.temperatureHumidity.humidity)
+          updatedTests.temperatureHumidity.meetsCriteria = tempValid && humidValid
+        }
       }
 
-      // Auto-validate recovery time
-      if (field === 'recoveryTime') {
-        updatedRoom.recoveryTime.meetsMaxTime = validateRecoveryTime(value)
-        updatedRoom.recoveryTime.result = updatedRoom.recoveryTime.meetsMaxTime ? 'Uygundur' : 'Uygun Değil'
-      }
-    } else if (testType === 'temperatureHumidity') {
-      updatedRoom.temperatureHumidity = {
-        ...updatedRoom.temperatureHumidity,
-        [field]: value
-      }
-
-      // Auto-validate temperature and humidity
-      if (field === 'temperature') {
-        updatedRoom.temperatureHumidity.temperatureInRange = validateTemperature(value)
-      } else if (field === 'humidity') {
-        updatedRoom.temperatureHumidity.humidityInRange = validateHumidity(value)
-      }
-
-      updatedRoom.temperatureHumidity.result =
-        updatedRoom.temperatureHumidity.temperatureInRange &&
-          updatedRoom.temperatureHumidity.humidityInRange ? 'Uygundur' : 'Uygun Değil'
+      updatedRoom.tests = updatedTests
+      updateRoom(roomId, updatedRoom)
+    } catch (error) {
+      console.error('Error updating room test data:', error)
+      alert('Test verileri güncellenirken bir hata oluştu.')
     }
-
-    updateRoom(roomId, updatedRoom)
   }
 
   const onSubmitInfo = (data: HvacReportInfo) => {
@@ -243,15 +253,31 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
   }
 
   const handleSaveReport = () => {
-    const reportData: HvacReportData = {
-      id: `report-${Date.now()}`,
-      reportInfo,
-      rooms,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    try {
+      // Validate required data
+      if (!reportInfo.hospitalName || !reportInfo.reportNumber) {
+        alert('Lütfen gerekli rapor bilgilerini doldurun.')
+        return
+      }
+      
+      if (rooms.length === 0) {
+        alert('En az bir oda eklemelisiniz.')
+        return
+      }
 
-    onSave(reportData)
+      const reportData: HvacReportData = {
+        id: `report-${Date.now()}`,
+        reportInfo,
+        rooms,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+
+      onSave(reportData)
+    } catch (error) {
+      console.error('Error saving report:', error)
+      alert('Rapor kaydedilirken bir hata oluştu.')
+    }
   }
 
   return (
@@ -262,8 +288,8 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= index
-                  ? 'bg-[#0B5AA3] border-[#0B5AA3] text-white'
-                  : 'border-gray-300 text-gray-500'
+                ? 'bg-[#0B5AA3] border-[#0B5AA3] text-white'
+                : 'border-gray-300 text-gray-500'
                 }`}>
                 {index + 1}
               </div>
@@ -429,8 +455,8 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Mahal No</Label>
                           <Input
-                            value={room.basicInfo.roomNumber}
-                            onChange={(e) => updateRoomBasicInfo(room.id, 'roomNumber', e.target.value)}
+                            value={room.roomNo}
+                            onChange={(e) => updateRoomBasicInfo(room.id, 'roomNo', e.target.value)}
                             placeholder="Örn: 0005"
                           />
                         </div>
@@ -438,7 +464,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Mahal Adı</Label>
                           <Input
-                            value={room.basicInfo.roomName}
+                            value={room.roomName}
                             onChange={(e) => updateRoomBasicInfo(room.id, 'roomName', e.target.value)}
                             placeholder="Örn: Steril Depo"
                           />
@@ -449,7 +475,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <Input
                             type="number"
                             step="0.01"
-                            value={room.basicInfo.surfaceArea}
+                            value={room.surfaceArea}
                             onChange={(e) => updateRoomBasicInfo(room.id, 'surfaceArea', parseFloat(e.target.value) || 0)}
                             placeholder="14.00"
                           />
@@ -460,7 +486,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <Input
                             type="number"
                             step="0.01"
-                            value={room.basicInfo.height}
+                            value={room.height}
                             onChange={(e) => updateRoomBasicInfo(room.id, 'height', parseFloat(e.target.value) || 0)}
                             placeholder="3.00"
                           />
@@ -469,7 +495,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Hacim (m³)</Label>
                           <Input
-                            value={room.basicInfo.volume}
+                            value={room.volume}
                             disabled
                             className="bg-gray-50"
                           />
@@ -478,15 +504,15 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Test Modu</Label>
                           <Select
-                            value={room.basicInfo.testMode}
-                            onValueChange={(value) => updateRoomBasicInfo(room.id, 'testMode', value)}
+                            value={room.testMode}
+                            onValueChange={(value) => updateRoomBasicInfo(room.id, 'testMode', value as TestMode)}
                           >
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="At Rest">At Rest</SelectItem>
-                              <SelectItem value="In Operation">In Operation</SelectItem>
+                              <SelectItem value={TestMode.AtRest}>{TestMode.AtRest}</SelectItem>
+                              <SelectItem value={TestMode.InOperation}>{TestMode.InOperation}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -494,27 +520,36 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Akış Biçimi</Label>
                           <Select
-                            value={room.basicInfo.flowType}
-                            onValueChange={(value) => updateRoomBasicInfo(room.id, 'flowType', value)}
+                            value={room.flowType}
+                            onValueChange={(value) => updateRoomBasicInfo(room.id, 'flowType', value as FlowType)}
                           >
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Turbulence">Turbulence</SelectItem>
-                              <SelectItem value="Laminar">Laminar</SelectItem>
-                              <SelectItem value="Unidirectional">Unidirectional</SelectItem>
+                              <SelectItem value={FlowType.Turbulence}>{FlowType.Turbulence}</SelectItem>
+                              <SelectItem value={FlowType.Laminar}>{FlowType.Laminar}</SelectItem>
+                              <SelectItem value={FlowType.Unidirectional}>{FlowType.Unidirectional}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
                         <div>
                           <Label>Mahal Sınıfı</Label>
-                          <Input
-                            value={room.basicInfo.roomClass}
-                            onChange={(e) => updateRoomBasicInfo(room.id, 'roomClass', e.target.value)}
-                            placeholder="Örn: Sınıf II"
-                          />
+                          <Select
+                            value={room.roomClass}
+                            onValueChange={(value) => updateRoomBasicInfo(room.id, 'roomClass', value as RoomClass)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={RoomClass.ClassIB}>{RoomClass.ClassIB}</SelectItem>
+                              <SelectItem value={RoomClass.ClassII}>{RoomClass.ClassII}</SelectItem>
+                              <SelectItem value={RoomClass.IntensiveCare}>{RoomClass.IntensiveCare}</SelectItem>
+                              <SelectItem value={RoomClass.Other}>Diğer</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </CardContent>
@@ -556,7 +591,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                     value={room.id}
                     className="flex-shrink-0 min-w-[120px]"
                   >
-                    {room.basicInfo.roomName || `Oda ${index + 1}`}
+                    {room.roomName || `Oda ${index + 1}`}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -575,7 +610,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <Input
                             type="number"
                             step="0.1"
-                            value={room.pressureDifference.pressure}
+                            value={room.tests.pressureDifference.pressure}
                             onChange={(e) => updateRoomTestData(room.id, 'pressureDifference', 'pressure', parseFloat(e.target.value) || 0)}
                             placeholder="7"
                           />
@@ -583,18 +618,18 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Referans Alan</Label>
                           <Input
-                            value={room.pressureDifference.referenceArea}
+                            value={room.tests.pressureDifference.referenceArea}
                             onChange={(e) => updateRoomTestData(room.id, 'pressureDifference', 'referenceArea', e.target.value)}
                             placeholder="Koridor"
                           />
                         </div>
                         <div>
                           <Label>Sonuç</Label>
-                          <div className={`p-2 rounded text-center font-medium ${room.pressureDifference.result === 'Uygundur'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                          <div className={`p-2 rounded text-center font-medium ${room.tests.pressureDifference.meetsCriteria
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
                             }`}>
-                            {room.pressureDifference.result}
+                            {room.tests.pressureDifference.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                           </div>
                         </div>
                       </div>
@@ -621,8 +656,8 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Sonuç</Label>
                           <div className={`p-2 rounded text-center font-medium ${room.hepaLeakage.result === 'Uygundur'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
                             }`}>
                             {room.hepaLeakage.result}
                           </div>
@@ -669,8 +704,8 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <div>
                             <Label>Sonuç</Label>
                             <div className={`p-2 rounded text-center font-medium ${room.particleCount.result === 'Uygundur'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
                               }`}>
                               {room.particleCount.result}
                             </div>
@@ -700,8 +735,8 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Sonuç</Label>
                           <div className={`p-2 rounded text-center font-medium ${room.recoveryTime.result === 'Uygundur'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
                             }`}>
                             {room.recoveryTime.result}
                           </div>
@@ -740,8 +775,8 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>Sonuç</Label>
                           <div className={`p-2 rounded text-center font-medium ${room.temperatureHumidity.result === 'Uygundur'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
                             }`}>
                             {room.temperatureHumidity.result}
                           </div>
