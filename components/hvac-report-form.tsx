@@ -112,6 +112,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
         particleCount: {
           particle05: 0,
           particle5: 0,
+          particles05um: [],
           average: 0,
           isoClass: "",
           meetsCriteria: false
@@ -211,7 +212,13 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
         }
 
         // Auto-calculate averages and ISO class
-        if (field === 'particle05') {
+        if (field === 'particles05um') {
+          const average = value.length > 0 ? value.reduce((a: number, b: number) => a + b, 0) / value.length : 0
+          updatedTests.particleCount.particle05 = average
+          updatedTests.particleCount.average = average
+          updatedTests.particleCount.isoClass = determineISOClass(average)
+          updatedTests.particleCount.meetsCriteria = meetsISOStandard(average)
+        } else if (field === 'particle05') {
           updatedTests.particleCount.isoClass = determineISOClass(value)
           updatedTests.particleCount.meetsCriteria = meetsISOStandard(value)
         }
@@ -648,18 +655,18 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <Input
                             type="number"
                             step="0.001"
-                            value={room.hepaLeakage?.maxLeakage || 0}
+                            value={room.tests?.hepaLeakage?.maxLeakage || 0}
                             onChange={(e) => updateRoomTestData(room.id, 'hepaLeakage', 'maxLeakage', parseFloat(e.target.value) || 0)}
                             placeholder="0.008"
                           />
                         </div>
                         <div>
                           <Label>Sonuç</Label>
-                          <div className={`p-2 rounded text-center font-medium ${room.hepaLeakage?.result === 'Uygundur'
+                          <div className={`p-2 rounded text-center font-medium ${room.tests?.hepaLeakage?.meetsCriteria
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                             }`}>
-                            {room.hepaLeakage?.result || 'Belirtilmemiş'}
+                            {room.tests?.hepaLeakage?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                           </div>
                         </div>
                       </div>
@@ -676,7 +683,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                         <div>
                           <Label>0.5 µm Partikül Ölçümleri (virgülle ayırın)</Label>
                           <Input
-                            value={room.particleCount?.particles05um?.join(', ') || ''}
+                            value={room.tests?.particleCount?.particles05um?.join(', ') || ''}
                             onChange={(e) => {
                               const values = e.target.value.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v))
                               updateRoomTestData(room.id, 'particleCount', 'particles05um', values)
@@ -688,7 +695,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <div>
                             <Label>Ortalama (0.5 µm)</Label>
                             <Input
-                              value={room.particleCount?.average05um || 0}
+                              value={room.tests?.particleCount?.average || 0}
                               disabled
                               className="bg-gray-50"
                             />
@@ -696,18 +703,18 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <div>
                             <Label>ISO Sınıfı</Label>
                             <Input
-                              value={room.particleCount?.isoClass || '7'}
+                              value={room.tests?.particleCount?.isoClass || '7'}
                               disabled
                               className="bg-gray-50"
                             />
                           </div>
                           <div>
                             <Label>Sonuç</Label>
-                            <div className={`p-2 rounded text-center font-medium ${room.particleCount?.result === 'Uygundur'
+                            <div className={`p-2 rounded text-center font-medium ${room.tests?.particleCount?.meetsCriteria
                               ? 'bg-green-100 text-green-800'
                               : 'bg-red-100 text-red-800'
                               }`}>
-                              {room.particleCount?.result || 'Belirtilmemiş'}
+                              {room.tests?.particleCount?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                             </div>
                           </div>
                         </div>
@@ -727,18 +734,18 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <Input
                             type="number"
                             step="0.1"
-                            value={room.recoveryTime?.recoveryTime || 0}
-                            onChange={(e) => updateRoomTestData(room.id, 'recoveryTime', 'recoveryTime', parseFloat(e.target.value) || 0)}
+                            value={room.tests?.recoveryTime?.duration || 0}
+                            onChange={(e) => updateRoomTestData(room.id, 'recoveryTime', 'duration', parseFloat(e.target.value) || 0)}
                             placeholder="24"
                           />
                         </div>
                         <div>
                           <Label>Sonuç</Label>
-                          <div className={`p-2 rounded text-center font-medium ${room.recoveryTime?.result === 'Uygundur'
+                          <div className={`p-2 rounded text-center font-medium ${room.tests?.recoveryTime?.meetsCriteria
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                             }`}>
-                            {room.recoveryTime?.result || 'Belirtilmemiş'}
+                            {room.tests?.recoveryTime?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                           </div>
                         </div>
                       </div>
@@ -757,7 +764,7 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <Input
                             type="number"
                             step="0.1"
-                            value={room.temperatureHumidity?.temperature || 0}
+                            value={room.tests?.temperatureHumidity?.temperature || 0}
                             onChange={(e) => updateRoomTestData(room.id, 'temperatureHumidity', 'temperature', parseFloat(e.target.value) || 0)}
                             placeholder="22.5"
                           />
@@ -767,18 +774,18 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                           <Input
                             type="number"
                             step="0.1"
-                            value={room.temperatureHumidity?.humidity || 0}
+                            value={room.tests?.temperatureHumidity?.humidity || 0}
                             onChange={(e) => updateRoomTestData(room.id, 'temperatureHumidity', 'humidity', parseFloat(e.target.value) || 0)}
                             placeholder="55"
                           />
                         </div>
                         <div>
                           <Label>Sonuç</Label>
-                          <div className={`p-2 rounded text-center font-medium ${room.temperatureHumidity?.result === 'Uygundur'
+                          <div className={`p-2 rounded text-center font-medium ${room.tests?.temperatureHumidity?.meetsCriteria
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                             }`}>
-                            {room.temperatureHumidity?.result || 'Belirtilmemiş'}
+                            {room.tests?.temperatureHumidity?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                           </div>
                         </div>
                       </div>
@@ -830,8 +837,8 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                     <CardContent className="pt-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-medium">{room.basicInfo?.roomName || 'Bilinmeyen Oda'}</h4>
-                          <p className="text-sm text-gray-600">Mahal No: {room.basicInfo?.roomNumber || 'N/A'}</p>
+                          <h4 className="font-medium">{room.roomName || 'Bilinmeyen Oda'}</h4>
+                          <p className="text-sm text-gray-600">Mahal No: {room.roomNo || 'N/A'}</p>
                         </div>
                         <div className="text-right">
                           <div className="text-sm text-gray-600">Sayfa {index + 1}/{rooms.length}</div>
@@ -839,25 +846,25 @@ export function HvacReportForm({ onSave }: HvacReportFormProps) {
                       </div>
 
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                        <div className={`p-2 rounded text-center ${room.pressureDifference?.result === 'Uygundur' ? 'bg-green-100' : 'bg-red-100'
+                        <div className={`p-2 rounded text-center ${room.tests?.pressureDifference?.meetsCriteria ? 'bg-green-100' : 'bg-red-100'
                           }`}>
-                          Basınç: {room.pressureDifference?.result || 'N/A'}
+                          Basınç: {room.tests?.pressureDifference?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                         </div>
-                        <div className={`p-2 rounded text-center ${room.hepaLeakage?.result === 'Uygundur' ? 'bg-green-100' : 'bg-red-100'
+                        <div className={`p-2 rounded text-center ${room.tests?.hepaLeakage?.meetsCriteria ? 'bg-green-100' : 'bg-red-100'
                           }`}>
-                          HEPA: {room.hepaLeakage?.result || 'N/A'}
+                          HEPA: {room.tests?.hepaLeakage?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                         </div>
-                        <div className={`p-2 rounded text-center ${room.particleCount?.result === 'Uygundur' ? 'bg-green-100' : 'bg-red-100'
+                        <div className={`p-2 rounded text-center ${room.tests?.particleCount?.meetsCriteria ? 'bg-green-100' : 'bg-red-100'
                           }`}>
-                          Partikül: {room.particleCount?.result || 'N/A'}
+                          Partikül: {room.tests?.particleCount?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                         </div>
-                        <div className={`p-2 rounded text-center ${room.recoveryTime?.result === 'Uygundur' ? 'bg-green-100' : 'bg-red-100'
+                        <div className={`p-2 rounded text-center ${room.tests?.recoveryTime?.meetsCriteria ? 'bg-green-100' : 'bg-red-100'
                           }`}>
-                          Recovery: {room.recoveryTime?.result || 'N/A'}
+                          Recovery: {room.tests?.recoveryTime?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                         </div>
-                        <div className={`p-2 rounded text-center ${room.temperatureHumidity?.result === 'Uygundur' ? 'bg-green-100' : 'bg-red-100'
+                        <div className={`p-2 rounded text-center ${room.tests?.temperatureHumidity?.meetsCriteria ? 'bg-green-100' : 'bg-red-100'
                           }`}>
-                          Sıcaklık/Nem: {room.temperatureHumidity?.result || 'N/A'}
+                          Sıcaklık/Nem: {room.tests?.temperatureHumidity?.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                         </div>
                       </div>
                     </CardContent>

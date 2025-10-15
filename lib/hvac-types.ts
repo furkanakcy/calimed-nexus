@@ -75,6 +75,7 @@ export interface HepaLeakage {
 export interface ParticleCount {
   particle05: number
   particle5: number
+  particles05um?: number[]
   average: number
   isoClass: string
   meetsCriteria: boolean
