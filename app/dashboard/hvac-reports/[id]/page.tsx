@@ -204,11 +204,11 @@ export default function HvacReportViewPage() {
                     <CardContent className="pt-4">
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h4 className="font-semibold text-lg">{room.basicInfo.roomName}</h4>
+                          <h4 className="font-semibold text-lg">{room.roomName || room.basicInfo?.roomName || 'Bilinmeyen Oda'}</h4>
                           <div className="text-sm text-gray-600 space-y-1">
-                            <div>Mahal No: {room.basicInfo.roomNumber}</div>
-                            <div>Yüzey Alanı: {room.basicInfo.surfaceArea} m² | Yükseklik: {room.basicInfo.height} m | Hacim: {room.basicInfo.volume} m³</div>
-                            <div>Test Modu: {room.basicInfo.testMode} | Akış Biçimi: {room.basicInfo.flowType} | Sınıf: {room.basicInfo.roomClass}</div>
+                            <div>Mahal No: {room.roomNo || room.basicInfo?.roomNumber || 'N/A'}</div>
+                            <div>Yüzey Alanı: {room.surfaceArea || room.basicInfo?.surfaceArea || 0} m² | Yükseklik: {room.height || room.basicInfo?.height || 0} m | Hacim: {room.volume || room.basicInfo?.volume || 0} m³</div>
+                            <div>Test Modu: {room.testMode || room.basicInfo?.testMode || 'N/A'} | Akış Biçimi: {room.flowType || room.basicInfo?.flowType || 'N/A'} | Sınıf: {room.roomClass || room.basicInfo?.roomClass || 'N/A'}</div>
                           </div>
                         </div>
                         <div className="text-right">
@@ -227,47 +227,47 @@ export default function HvacReportViewPage() {
                       {/* Test Results Grid */}
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         <div className={`p-3 rounded-lg border ${
-                          room.pressureDifference.result === 'Uygundur' 
+                          (room.tests?.pressureDifference?.meetsCriteria || room.pressureDifference?.result === 'Uygundur')
                             ? 'bg-green-50 border-green-200' 
                             : 'bg-red-50 border-red-200'
                         }`}>
                           <div className="text-sm font-medium">Basınç Farkı</div>
                           <div className="text-xs text-gray-600">≥ 6 Pa</div>
-                          <div className="font-semibold">{room.pressureDifference.pressure} Pa</div>
+                          <div className="font-semibold">{room.tests?.pressureDifference?.pressure || room.pressureDifference?.pressure || 0} Pa</div>
                           <div className={`text-xs font-medium ${
-                            room.pressureDifference.result === 'Uygundur' ? 'text-green-700' : 'text-red-700'
+                            (room.tests?.pressureDifference?.meetsCriteria || room.pressureDifference?.result === 'Uygundur') ? 'text-green-700' : 'text-red-700'
                           }`}>
-                            {room.pressureDifference.result}
+                            {room.tests?.pressureDifference?.meetsCriteria ? 'UYGUNDUR' : room.pressureDifference?.result || 'UYGUN DEĞİL'}
                           </div>
                         </div>
                         
                         <div className={`p-3 rounded-lg border ${
-                          room.airFlowDirection.result === 'Uygundur' 
+                          (room.tests?.airFlowDirection?.result === 'UYGUNDUR' || room.airFlowDirection?.result === 'Uygundur')
                             ? 'bg-green-50 border-green-200' 
                             : 'bg-red-50 border-red-200'
                         }`}>
                           <div className="text-sm font-medium">Hava Akış Yönü</div>
                           <div className="text-xs text-gray-600">Temiz→Kirli</div>
-                          <div className="font-semibold">Gözlem</div>
+                          <div className="font-semibold">{room.tests?.airFlowDirection?.observation || 'Gözlem'}</div>
                           <div className={`text-xs font-medium ${
-                            room.airFlowDirection.result === 'Uygundur' ? 'text-green-700' : 'text-red-700'
+                            (room.tests?.airFlowDirection?.result === 'UYGUNDUR' || room.airFlowDirection?.result === 'Uygundur') ? 'text-green-700' : 'text-red-700'
                           }`}>
-                            {room.airFlowDirection.result}
+                            {room.tests?.airFlowDirection?.result || room.airFlowDirection?.result || 'UYGUN DEĞİL'}
                           </div>
                         </div>
                         
                         <div className={`p-3 rounded-lg border ${
-                          room.hepaLeakage.result === 'Uygundur' 
+                          (room.tests?.hepaLeakage?.meetsCriteria || room.hepaLeakage?.result === 'Uygundur')
                             ? 'bg-green-50 border-green-200' 
                             : 'bg-red-50 border-red-200'
                         }`}>
                           <div className="text-sm font-medium">HEPA Sızdırmazlık</div>
                           <div className="text-xs text-gray-600">≤ %0.01</div>
-                          <div className="font-semibold">%{room.hepaLeakage.maxLeakage}</div>
+                          <div className="font-semibold">%{room.tests?.hepaLeakage?.actualLeakage || room.hepaLeakage?.maxLeakage || 0}</div>
                           <div className={`text-xs font-medium ${
-                            room.hepaLeakage.result === 'Uygundur' ? 'text-green-700' : 'text-red-700'
+                            (room.tests?.hepaLeakage?.meetsCriteria || room.hepaLeakage?.result === 'Uygundur') ? 'text-green-700' : 'text-red-700'
                           }`}>
-                            {room.hepaLeakage.result}
+                            {room.tests?.hepaLeakage?.meetsCriteria ? 'UYGUNDUR' : room.hepaLeakage?.result || 'UYGUN DEĞİL'}
                           </div>
                         </div>
                         

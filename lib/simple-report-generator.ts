@@ -71,28 +71,49 @@ export function generateSimplePDF(reportData: HvacReportData) {
         </tr>
       </table>
 
-      ${reportData.rooms.map((room, index) => `
+      ${reportData.rooms.map((room, index) => {
+        // Safe access to room properties with fallbacks
+        const roomNo = room.roomNo || room.basicInfo?.roomNumber || 'N/A'
+        const roomName = room.roomName || room.basicInfo?.roomName || 'Bilinmeyen Oda'
+        const surfaceArea = room.surfaceArea || room.basicInfo?.surfaceArea || 0
+        const height = room.height || room.basicInfo?.height || 0
+        const volume = room.volume || room.basicInfo?.volume || 0
+        const testMode = room.testMode || room.basicInfo?.testMode || 'N/A'
+        const flowType = room.flowType || room.basicInfo?.flowType || 'N/A'
+        const roomClass = room.roomClass || room.basicInfo?.roomClass || 'N/A'
+        
+        // Safe access to test data with fallbacks
+        const tests = room.tests || {}
+        const airflowData = tests.airflowData || room.airFlow || {}
+        const pressureDifference = tests.pressureDifference || room.pressureDifference || {}
+        const airFlowDirection = tests.airFlowDirection || room.airFlowDirection || {}
+        const hepaLeakage = tests.hepaLeakage || room.hepaLeakage || {}
+        const particleCount = tests.particleCount || room.particleCount || {}
+        const recoveryTime = tests.recoveryTime || room.recoveryTime || {}
+        const temperatureHumidity = tests.temperatureHumidity || room.temperatureHumidity || {}
+        
+        return `
         <div class="room-section">
-          <div class="room-title">MAHAL NO: ${room.roomNo} - ${room.roomName}</div>
+          <div class="room-title">MAHAL NO: ${roomNo} - ${roomName}</div>
           
           <table class="info-table">
             <tr>
               <td class="label">Yüzey Alanı:</td>
-              <td>${room.surfaceArea} m²</td>
+              <td>${surfaceArea} m²</td>
               <td class="label">Yükseklik:</td>
-              <td>${room.height} m</td>
+              <td>${height} m</td>
             </tr>
             <tr>
               <td class="label">Hacim:</td>
-              <td>${room.volume} m³</td>
+              <td>${volume} m³</td>
               <td class="label">Test Modu:</td>
-              <td>${room.testMode}</td>
+              <td>${testMode}</td>
             </tr>
             <tr>
               <td class="label">Akış Biçimi:</td>
-              <td>${room.flowType}</td>
+              <td>${flowType}</td>
               <td class="label">Mahal Sınıfı:</td>
-              <td>${room.roomClass}</td>
+              <td>${roomClass}</td>
             </tr>
           </table>
 
@@ -110,64 +131,64 @@ export function generateSimplePDF(reportData: HvacReportData) {
               <tr>
                 <td>1</td>
                 <td>Hava Debisi</td>
-                <td>${room.tests.airflowData.criteria}</td>
-                <td>${room.tests.airflowData.flowRate} m³/h</td>
-                <td class="${room.tests.airflowData.meetsCriteria ? 'success' : 'failure'}">
-                  ${room.tests.airflowData.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                <td>${airflowData.criteria || 'Belirtilmemiş'}</td>
+                <td>${airflowData.flowRate || airflowData.totalFlowRate || 0} m³/h</td>
+                <td class="${(airflowData.meetsCriteria || airflowData.meetsMinCriteria) ? 'success' : 'failure'}">
+                  ${(airflowData.meetsCriteria || airflowData.meetsMinCriteria) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                 </td>
               </tr>
               <tr>
                 <td>2</td>
                 <td>Basınç Farkı</td>
-                <td>${room.tests.pressureDifference.criteria}</td>
-                <td>${room.tests.pressureDifference.pressure} Pa</td>
-                <td class="${room.tests.pressureDifference.meetsCriteria ? 'success' : 'failure'}">
-                  ${room.tests.pressureDifference.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                <td>${pressureDifference.criteria || '≥ 6 Pa'}</td>
+                <td>${pressureDifference.pressure || 0} Pa</td>
+                <td class="${(pressureDifference.meetsCriteria || pressureDifference.meetsMinPressure) ? 'success' : 'failure'}">
+                  ${(pressureDifference.meetsCriteria || pressureDifference.meetsMinPressure) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                 </td>
               </tr>
               <tr>
                 <td>3</td>
                 <td>Hava Akış Yönü</td>
                 <td>Temiz → Kirli</td>
-                <td>${room.tests.airFlowDirection.observation || 'Gözlem'}</td>
-                <td class="${room.tests.airFlowDirection.result === 'UYGUNDUR' ? 'success' : 'failure'}">
-                  ${room.tests.airFlowDirection.result}
+                <td>${airFlowDirection.observation || airFlowDirection.direction || 'Gözlem'}</td>
+                <td class="${airFlowDirection.result === 'UYGUNDUR' || airFlowDirection.result === 'Uygundur' ? 'success' : 'failure'}">
+                  ${airFlowDirection.result || 'Belirtilmemiş'}
                 </td>
               </tr>
               <tr>
                 <td>4</td>
                 <td>HEPA Sızdırmazlık</td>
-                <td>${room.tests.hepaLeakage.criteria}</td>
-                <td>${room.tests.hepaLeakage.actualLeakage}%</td>
-                <td class="${room.tests.hepaLeakage.meetsCriteria ? 'success' : 'failure'}">
-                  ${room.tests.hepaLeakage.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                <td>${hepaLeakage.criteria || '≤ %0.01'}</td>
+                <td>${hepaLeakage.actualLeakage || hepaLeakage.maxLeakage || 0}%</td>
+                <td class="${(hepaLeakage.meetsCriteria || hepaLeakage.meetsMaxLeakage) ? 'success' : 'failure'}">
+                  ${(hepaLeakage.meetsCriteria || hepaLeakage.meetsMaxLeakage) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                 </td>
               </tr>
               <tr>
                 <td>5</td>
                 <td>Partikül Sayısı</td>
-                <td>ISO Class ${room.tests.particleCount.isoClass}</td>
-                <td>${room.tests.particleCount.particle05}</td>
-                <td class="${room.tests.particleCount.meetsCriteria ? 'success' : 'failure'}">
-                  ${room.tests.particleCount.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                <td>ISO Class ${particleCount.isoClass || '7'}</td>
+                <td>${particleCount.particle05 || particleCount.average05um || 0}</td>
+                <td class="${(particleCount.meetsCriteria || particleCount.meetsISOStandard) ? 'success' : 'failure'}">
+                  ${(particleCount.meetsCriteria || particleCount.meetsISOStandard) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                 </td>
               </tr>
               <tr>
                 <td>6</td>
                 <td>Recovery Time</td>
-                <td>${room.tests.recoveryTime.criteria}</td>
-                <td>${room.tests.recoveryTime.duration} dk</td>
-                <td class="${room.tests.recoveryTime.meetsCriteria ? 'success' : 'failure'}">
-                  ${room.tests.recoveryTime.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                <td>${recoveryTime.criteria || '≤ 25 dk'}</td>
+                <td>${recoveryTime.duration || recoveryTime.recoveryTime || 0} dk</td>
+                <td class="${(recoveryTime.meetsCriteria || recoveryTime.meetsMaxTime) ? 'success' : 'failure'}">
+                  ${(recoveryTime.meetsCriteria || recoveryTime.meetsMaxTime) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                 </td>
               </tr>
               <tr>
                 <td>7</td>
                 <td>Sıcaklık & Nem</td>
-                <td>${room.tests.temperatureHumidity.criteria}</td>
-                <td>${room.tests.temperatureHumidity.temperature}°C, ${room.tests.temperatureHumidity.humidity}%</td>
-                <td class="${room.tests.temperatureHumidity.meetsCriteria ? 'success' : 'failure'}">
-                  ${room.tests.temperatureHumidity.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                <td>${temperatureHumidity.criteria || '20-24°C, 40-60%'}</td>
+                <td>${temperatureHumidity.temperature || 0}°C, ${temperatureHumidity.humidity || 0}%</td>
+                <td class="${(temperatureHumidity.meetsCriteria || (temperatureHumidity.temperatureInRange && temperatureHumidity.humidityInRange)) ? 'success' : 'failure'}">
+                  ${(temperatureHumidity.meetsCriteria || (temperatureHumidity.temperatureInRange && temperatureHumidity.humidityInRange)) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                 </td>
               </tr>
             </tbody>
@@ -177,7 +198,8 @@ export function generateSimplePDF(reportData: HvacReportData) {
             Sayfa ${index + 1}/${reportData.rooms.length}
           </div>
         </div>
-      `).join('')}
+        `
+      }).join('')}
 
       <div style="margin-top: 40px; border-top: 2px solid #0B5AA3; padding-top: 20px;">
         <table class="info-table">
@@ -339,24 +361,44 @@ export function generateSimpleExcel(reportData: HvacReportData) {
   csvContent += `Onaylayan,${reportData.reportInfo.approverName}\n`
   csvContent += `Kuruluş,${reportData.reportInfo.organizationName}\n\n`
 
-  // Room data
+  // Room data with safe access
   reportData.rooms.forEach((room, index) => {
-    csvContent += `MAHAL ${index + 1}: ${room.roomNo} - ${room.roomName}\n`
-    csvContent += `Yüzey Alanı,${room.surfaceArea} m²\n`
-    csvContent += `Yükseklik,${room.height} m\n`
-    csvContent += `Hacim,${room.volume} m³\n`
-    csvContent += `Test Modu,${room.testMode}\n`
-    csvContent += `Akış Biçimi,${room.flowType}\n`
-    csvContent += `Mahal Sınıfı,${room.roomClass}\n\n`
+    // Safe access to room properties with fallbacks
+    const roomNo = room.roomNo || room.basicInfo?.roomNumber || 'N/A'
+    const roomName = room.roomName || room.basicInfo?.roomName || 'Bilinmeyen Oda'
+    const surfaceArea = room.surfaceArea || room.basicInfo?.surfaceArea || 0
+    const height = room.height || room.basicInfo?.height || 0
+    const volume = room.volume || room.basicInfo?.volume || 0
+    const testMode = room.testMode || room.basicInfo?.testMode || 'N/A'
+    const flowType = room.flowType || room.basicInfo?.flowType || 'N/A'
+    const roomClass = room.roomClass || room.basicInfo?.roomClass || 'N/A'
+    
+    // Safe access to test data with fallbacks
+    const tests = room.tests || {}
+    const airflowData = tests.airflowData || room.airFlow || {}
+    const pressureDifference = tests.pressureDifference || room.pressureDifference || {}
+    const airFlowDirection = tests.airFlowDirection || room.airFlowDirection || {}
+    const hepaLeakage = tests.hepaLeakage || room.hepaLeakage || {}
+    const particleCount = tests.particleCount || room.particleCount || {}
+    const recoveryTime = tests.recoveryTime || room.recoveryTime || {}
+    const temperatureHumidity = tests.temperatureHumidity || room.temperatureHumidity || {}
+    
+    csvContent += `MAHAL ${index + 1}: ${roomNo} - ${roomName}\n`
+    csvContent += `Yüzey Alanı,${surfaceArea} m²\n`
+    csvContent += `Yükseklik,${height} m\n`
+    csvContent += `Hacim,${volume} m³\n`
+    csvContent += `Test Modu,${testMode}\n`
+    csvContent += `Akış Biçimi,${flowType}\n`
+    csvContent += `Mahal Sınıfı,${roomClass}\n\n`
     
     csvContent += `Test No,Test Adı,Kriter,Ölçüm Değeri,Sonuç\n`
-    csvContent += `1,Hava Debisi,${room.tests.airflowData.criteria},${room.tests.airflowData.flowRate} m³/h,${room.tests.airflowData.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
-    csvContent += `2,Basınç Farkı,${room.tests.pressureDifference.criteria},${room.tests.pressureDifference.pressure} Pa,${room.tests.pressureDifference.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
-    csvContent += `3,Hava Akış Yönü,Temiz → Kirli,${room.tests.airFlowDirection.observation || 'Gözlem'},${room.tests.airFlowDirection.result}\n`
-    csvContent += `4,HEPA Sızdırmazlık,${room.tests.hepaLeakage.criteria},${room.tests.hepaLeakage.actualLeakage}%,${room.tests.hepaLeakage.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
-    csvContent += `5,Partikül Sayısı,ISO Class ${room.tests.particleCount.isoClass},${room.tests.particleCount.particle05},${room.tests.particleCount.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
-    csvContent += `6,Recovery Time,${room.tests.recoveryTime.criteria},${room.tests.recoveryTime.duration} dk,${room.tests.recoveryTime.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
-    csvContent += `7,Sıcaklık & Nem,${room.tests.temperatureHumidity.criteria},"${room.tests.temperatureHumidity.temperature}°C, ${room.tests.temperatureHumidity.humidity}%",${room.tests.temperatureHumidity.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n\n`
+    csvContent += `1,Hava Debisi,${airflowData.criteria || 'Belirtilmemiş'},${airflowData.flowRate || airflowData.totalFlowRate || 0} m³/h,${(airflowData.meetsCriteria || airflowData.meetsMinCriteria) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
+    csvContent += `2,Basınç Farkı,${pressureDifference.criteria || '≥ 6 Pa'},${pressureDifference.pressure || 0} Pa,${(pressureDifference.meetsCriteria || pressureDifference.meetsMinPressure) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
+    csvContent += `3,Hava Akış Yönü,Temiz → Kirli,${airFlowDirection.observation || airFlowDirection.direction || 'Gözlem'},${airFlowDirection.result || 'Belirtilmemiş'}\n`
+    csvContent += `4,HEPA Sızdırmazlık,${hepaLeakage.criteria || '≤ %0.01'},${hepaLeakage.actualLeakage || hepaLeakage.maxLeakage || 0}%,${(hepaLeakage.meetsCriteria || hepaLeakage.meetsMaxLeakage) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
+    csvContent += `5,Partikül Sayısı,ISO Class ${particleCount.isoClass || '7'},${particleCount.particle05 || particleCount.average05um || 0},${(particleCount.meetsCriteria || particleCount.meetsISOStandard) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
+    csvContent += `6,Recovery Time,${recoveryTime.criteria || '≤ 25 dk'},${recoveryTime.duration || recoveryTime.recoveryTime || 0} dk,${(recoveryTime.meetsCriteria || recoveryTime.meetsMaxTime) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n`
+    csvContent += `7,Sıcaklık & Nem,${temperatureHumidity.criteria || '20-24°C; 40-60%'},"${temperatureHumidity.temperature || 0}°C; ${temperatureHumidity.humidity || 0}%",${(temperatureHumidity.meetsCriteria || (temperatureHumidity.temperatureInRange && temperatureHumidity.humidityInRange)) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}\n\n`
   })
 
   const fileName = `HVAC_Raporu_${reportData.reportInfo.reportNumber}_${new Date().toISOString().split('T')[0]}.csv`
