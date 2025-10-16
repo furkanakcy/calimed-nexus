@@ -272,47 +272,47 @@ export default function HvacReportViewPage() {
                         </div>
                         
                         <div className={`p-3 rounded-lg border ${
-                          room.particleCount.result === 'Uygundur' 
+                          (room.tests?.particleCount?.meetsCriteria || room.particleCount?.meetsISOStandard) 
                             ? 'bg-green-50 border-green-200' 
                             : 'bg-red-50 border-red-200'
                         }`}>
                           <div className="text-sm font-medium">Partikül Sayısı (0.5 µm)</div>
                           <div className="text-xs text-gray-600">ISO Class 7</div>
-                          <div className="font-semibold">{room.particleCount.isoClass}</div>
+                          <div className="font-semibold">{room.tests?.particleCount?.isoClass || room.particleCount?.isoClass || '7'}</div>
                           <div className={`text-xs font-medium ${
-                            room.particleCount.result === 'Uygundur' ? 'text-green-700' : 'text-red-700'
+                            (room.tests?.particleCount?.meetsCriteria || room.particleCount?.meetsISOStandard) ? 'text-green-700' : 'text-red-700'
                           }`}>
-                            {room.particleCount.result}
+                            {(room.tests?.particleCount?.meetsCriteria || room.particleCount?.meetsISOStandard) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                           </div>
                         </div>
                         
                         <div className={`p-3 rounded-lg border ${
-                          room.recoveryTime.result === 'Uygundur' 
+                          (room.tests?.recoveryTime?.meetsCriteria || room.recoveryTime?.meetsMaxTime) 
                             ? 'bg-green-50 border-green-200' 
                             : 'bg-red-50 border-red-200'
                         }`}>
                           <div className="text-sm font-medium">Recovery Time</div>
                           <div className="text-xs text-gray-600">≤ 25 dk</div>
-                          <div className="font-semibold">{room.recoveryTime.recoveryTime} dk</div>
+                          <div className="font-semibold">{room.tests?.recoveryTime?.duration || room.recoveryTime?.recoveryTime || 0} dk</div>
                           <div className={`text-xs font-medium ${
-                            room.recoveryTime.result === 'Uygundur' ? 'text-green-700' : 'text-red-700'
+                            (room.tests?.recoveryTime?.meetsCriteria || room.recoveryTime?.meetsMaxTime) ? 'text-green-700' : 'text-red-700'
                           }`}>
-                            {room.recoveryTime.result}
+                            {(room.tests?.recoveryTime?.meetsCriteria || room.recoveryTime?.meetsMaxTime) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                           </div>
                         </div>
                         
                         <div className={`p-3 rounded-lg border ${
-                          room.temperatureHumidity.result === 'Uygundur' 
+                          (room.tests?.temperatureHumidity?.meetsCriteria || (room.temperatureHumidity?.temperatureInRange && room.temperatureHumidity?.humidityInRange)) 
                             ? 'bg-green-50 border-green-200' 
                             : 'bg-red-50 border-red-200'
                         }`}>
                           <div className="text-sm font-medium">Sıcaklık & Nem</div>
                           <div className="text-xs text-gray-600">20-24°C, 40-60%</div>
-                          <div className="font-semibold">{room.temperatureHumidity.temperature}°C, {room.temperatureHumidity.humidity}%</div>
+                          <div className="font-semibold">{room.tests?.temperatureHumidity?.temperature || room.temperatureHumidity?.temperature || 0}°C, {room.tests?.temperatureHumidity?.humidity || room.temperatureHumidity?.humidity || 0}%</div>
                           <div className={`text-xs font-medium ${
-                            room.temperatureHumidity.result === 'Uygundur' ? 'text-green-700' : 'text-red-700'
+                            (room.tests?.temperatureHumidity?.meetsCriteria || (room.temperatureHumidity?.temperatureInRange && room.temperatureHumidity?.humidityInRange)) ? 'text-green-700' : 'text-red-700'
                           }`}>
-                            {room.temperatureHumidity.result}
+                            {(room.tests?.temperatureHumidity?.meetsCriteria || (room.temperatureHumidity?.temperatureInRange && room.temperatureHumidity?.humidityInRange)) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                           </div>
                         </div>
                       </div>
