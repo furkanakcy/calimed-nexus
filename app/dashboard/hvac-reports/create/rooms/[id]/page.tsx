@@ -255,7 +255,7 @@ export default function RoomsForm() {
                       <div className="space-y-2">
                         <Label>Hacim (m³)</Label>
                         <Input
-                          value={room.volume.toFixed(2)}
+                          value={(room.volume || 0).toFixed(2)}
                           readOnly
                           className="bg-gray-100 cursor-not-allowed"
                         />

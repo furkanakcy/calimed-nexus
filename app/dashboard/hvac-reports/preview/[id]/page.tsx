@@ -111,7 +111,7 @@ export default function HvacReportPreview() {
                   <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                     <div><span className="font-medium">YÜZEY ALANI:</span> {room.surfaceArea} m²</div>
                     <div><span className="font-medium">YÜKSEKLİK:</span> {room.height} m</div>
-                    <div><span className="font-medium">HACİM:</span> {room.volume.toFixed(2)} m³</div>
+                    <div><span className="font-medium">HACİM:</span> {(room.volume || room.basicInfo?.volume || 0).toFixed(2)} m³</div>
                     <div><span className="font-medium">MAHAL SINIFI:</span> {room.roomClass}</div>
                   </div>
                   
@@ -130,11 +130,11 @@ export default function HvacReportPreview() {
                         <tr>
                           <td className="border px-4 py-2">1</td>
                           <td className="border px-4 py-2">Hava Debisi ve Hava Değişim Oranı</td>
-                          <td className="border px-4 py-2">{room.tests.airflowData.criteria}</td>
+                          <td className="border px-4 py-2">{room.tests?.airflowData?.criteria || 'Belirtilmemiş'}</td>
                           <td className="border px-4 py-2">
-                            <div>{room.tests.airflowData.flowRate} m³/h</div>
-                            <div className={room.tests.airflowData.meetsCriteria ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                              {room.tests.airflowData.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                            <div>{room.tests?.airflowData?.flowRate || room.airFlow?.totalFlowRate || 0} m³/h</div>
+                            <div className={(room.tests?.airflowData?.meetsCriteria || room.airFlow?.meetsMinCriteria) ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {(room.tests?.airflowData?.meetsCriteria || room.airFlow?.meetsMinCriteria) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                             </div>
                           </td>
                         </tr>
@@ -143,11 +143,11 @@ export default function HvacReportPreview() {
                         <tr>
                           <td className="border px-4 py-2">2</td>
                           <td className="border px-4 py-2">Basınç Farkı</td>
-                          <td className="border px-4 py-2">{room.tests.pressureDifference.criteria}</td>
+                          <td className="border px-4 py-2">{room.tests?.pressureDifference?.criteria || '≥ 6 Pa'}</td>
                           <td className="border px-4 py-2">
-                            <div>{room.tests.pressureDifference.pressure} Pa</div>
-                            <div className={room.tests.pressureDifference.meetsCriteria ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                              {room.tests.pressureDifference.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                            <div>{room.tests?.pressureDifference?.pressure || room.pressureDifference?.pressure || 0} Pa</div>
+                            <div className={(room.tests?.pressureDifference?.meetsCriteria || room.pressureDifference?.result === 'Uygundur') ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {(room.tests?.pressureDifference?.meetsCriteria || room.pressureDifference?.result === 'Uygundur') ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                             </div>
                           </td>
                         </tr>
@@ -158,9 +158,9 @@ export default function HvacReportPreview() {
                           <td className="border px-4 py-2">Hava Akış Yönü</td>
                           <td className="border px-4 py-2">Temiz→Kirli</td>
                           <td className="border px-4 py-2">
-                            <div>{room.tests.airFlowDirection.observation}</div>
-                            <div className={room.tests.airFlowDirection.result === 'UYGUNDUR' ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                              {room.tests.airFlowDirection.result}
+                            <div>{room.tests?.airFlowDirection?.observation || room.airFlowDirection?.direction || 'Gözlem'}</div>
+                            <div className={(room.tests?.airFlowDirection?.result === 'UYGUNDUR' || room.airFlowDirection?.result === 'Uygundur') ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {room.tests?.airFlowDirection?.result || room.airFlowDirection?.result || 'UYGUN DEĞİL'}
                             </div>
                           </td>
                         </tr>
@@ -169,11 +169,11 @@ export default function HvacReportPreview() {
                         <tr>
                           <td className="border px-4 py-2">4</td>
                           <td className="border px-4 py-2">HEPA Sızdırmazlık</td>
-                          <td className="border px-4 py-2">{room.tests.hepaLeakage.criteria}</td>
+                          <td className="border px-4 py-2">{room.tests?.hepaLeakage?.criteria || '≤ %0.01'}</td>
                           <td className="border px-4 py-2">
-                            <div>{room.tests.hepaLeakage.actualLeakage}%</div>
-                            <div className={room.tests.hepaLeakage.meetsCriteria ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                              {room.tests.hepaLeakage.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                            <div>{room.tests?.hepaLeakage?.actualLeakage || room.hepaLeakage?.maxLeakage || 0}%</div>
+                            <div className={(room.tests?.hepaLeakage?.meetsCriteria || room.hepaLeakage?.result === 'Uygundur') ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {(room.tests?.hepaLeakage?.meetsCriteria || room.hepaLeakage?.result === 'Uygundur') ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                             </div>
                           </td>
                         </tr>
@@ -182,11 +182,11 @@ export default function HvacReportPreview() {
                         <tr>
                           <td className="border px-4 py-2">5</td>
                           <td className="border px-4 py-2">Partikül Sayısı (0.5 µm)</td>
-                          <td className="border px-4 py-2">ISO Class {room.tests.particleCount.isoClass}</td>
+                          <td className="border px-4 py-2">ISO Class {room.tests?.particleCount?.isoClass || room.particleCount?.isoClass || '7'}</td>
                           <td className="border px-4 py-2">
-                            <div>ISO {room.tests.particleCount.isoClass}</div>
-                            <div className={room.tests.particleCount.meetsCriteria ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                              {room.tests.particleCount.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                            <div>ISO {room.tests?.particleCount?.isoClass || room.particleCount?.isoClass || '7'}</div>
+                            <div className={(room.tests?.particleCount?.meetsCriteria || room.particleCount?.meetsISOStandard) ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {(room.tests?.particleCount?.meetsCriteria || room.particleCount?.meetsISOStandard) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                             </div>
                           </td>
                         </tr>
@@ -195,11 +195,11 @@ export default function HvacReportPreview() {
                         <tr>
                           <td className="border px-4 py-2">6</td>
                           <td className="border px-4 py-2">Recovery Time</td>
-                          <td className="border px-4 py-2">{room.tests.recoveryTime.criteria}</td>
+                          <td className="border px-4 py-2">{room.tests?.recoveryTime?.criteria || '≤ 25 dk'}</td>
                           <td className="border px-4 py-2">
-                            <div>{room.tests.recoveryTime.duration} dk</div>
-                            <div className={room.tests.recoveryTime.meetsCriteria ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                              {room.tests.recoveryTime.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                            <div>{room.tests?.recoveryTime?.duration || room.recoveryTime?.recoveryTime || 0} dk</div>
+                            <div className={(room.tests?.recoveryTime?.meetsCriteria || room.recoveryTime?.meetsMaxTime) ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {(room.tests?.recoveryTime?.meetsCriteria || room.recoveryTime?.meetsMaxTime) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                             </div>
                           </td>
                         </tr>
@@ -208,11 +208,11 @@ export default function HvacReportPreview() {
                         <tr>
                           <td className="border px-4 py-2">7</td>
                           <td className="border px-4 py-2">Sıcaklık ve Nem</td>
-                          <td className="border px-4 py-2">{room.tests.temperatureHumidity.criteria}</td>
+                          <td className="border px-4 py-2">{room.tests?.temperatureHumidity?.criteria || '20-24°C, 40-60%'}</td>
                           <td className="border px-4 py-2">
-                            <div>{room.tests.temperatureHumidity.temperature}°C / {room.tests.temperatureHumidity.humidity}%</div>
-                            <div className={room.tests.temperatureHumidity.meetsCriteria ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                              {room.tests.temperatureHumidity.meetsCriteria ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
+                            <div>{room.tests?.temperatureHumidity?.temperature || room.temperatureHumidity?.temperature || 0}°C / {room.tests?.temperatureHumidity?.humidity || room.temperatureHumidity?.humidity || 0}%</div>
+                            <div className={(room.tests?.temperatureHumidity?.meetsCriteria || (room.temperatureHumidity?.temperatureInRange && room.temperatureHumidity?.humidityInRange)) ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                              {(room.tests?.temperatureHumidity?.meetsCriteria || (room.temperatureHumidity?.temperatureInRange && room.temperatureHumidity?.humidityInRange)) ? 'UYGUNDUR' : 'UYGUN DEĞİL'}
                             </div>
                           </td>
                         </tr>
